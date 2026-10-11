@@ -148,7 +148,9 @@ class BookingService
             }
 
             // Kiểm tra ngày khám không được ở trong quá khứ
-            if ($slot->work_date && $slot->work_date->isPast() && ! $slot->work_date->isToday()) {
+            if (! $slot->work_date || now()->greaterThanOrEqualTo(
+                $slot->work_date->copy()->setTimeFromTimeString($slot->start_time)
+            )) {
                 throw new SlotUnavailableException('Khung giờ khám đã qua hạn đặt');
             }
 
