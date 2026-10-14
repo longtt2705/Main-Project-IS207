@@ -44,3 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/cancel',  [PaymentController::class, 'cancel'])->whereNumber('id');
     });
 });
+
+// Hospital discovery and booking.
+Route::get('/hospitals', [\App\Http\Controllers\Api\HospitalController::class, 'index']);
+Route::get('/hospitals/{id}', [\App\Http\Controllers\Api\HospitalController::class, 'show'])->whereNumber('id');
+Route::post('/bookings/hospital', [\App\Http\Controllers\Api\HospitalController::class, 'book'])->middleware('auth:sanctum');
