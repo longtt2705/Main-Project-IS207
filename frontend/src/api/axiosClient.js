@@ -25,6 +25,12 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    if (error.response?.status === 401 && !error.config?.url?.startsWith('/auth/')) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('medsi_auth_user');
+      const destination = window.location.pathname + window.location.search;
+      window.location.assign(`/login?redirect=${encodeURIComponent(destination)}`);
+    }
     // Trích xuất message chuẩn từ response.data.message
     const message =
       error.response?.data?.message ||

@@ -2,6 +2,12 @@
 
 > MedSi áp dụng kiến trúc tách rời (**Decoupled Client-Server Architecture**): **Laravel 12 API Only** ở Backend và **React + Vite** ở Frontend.
 
+Luồng **BKH/TKT Sprint 3** đã được đối chiếu với tài liệu yêu cầu: xem
+[bảng kiểm tra, các thay đổi và hướng dẫn chạy](docs/sprint-3-audit.md).
+Sau khi cập nhật, chạy `php artisan migrate`, `php artisan tickets:issue-missing`
+và giữ `php artisan schedule:work` chạy để tự xử lý giữ chỗ hết hạn/no-show.
+Giao diện bệnh viện bắt đầu tại `/hospitals`; tiếp đón tại `/reception`.
+
 ---
 
 ## 📑 Mục lục
@@ -25,7 +31,9 @@ Xây dựng một hệ thống đặt lịch khám bệnh gọn nhẹ nhưng chu
 - **Dễ bảo trì & Mở rộng:** Phân tách rõ ràng giữa HTTP layer, Validation layer, Business logic layer và Data access layer.
 
 ### 1.2. Các nhóm người dùng (Roles)
-Hiện tại hệ thống chỉ triển khai hai role tài khoản: `patient` và `admin`.
+Hệ thống có `patient`, `admin` và các role phạm vi bệnh viện:
+`hospital_admin` (cấu hình/đóng nhận khám), `staff` (tiếp đón/hoàn tất), `kiosk` (check-in).
+Các tài khoản bệnh viện cần `users.hospital_id`; đăng ký công khai chỉ tạo `patient`.
 Bác sĩ là dữ liệu hồ sơ chuyên môn trong `doctors`, chưa có role hoặc luồng
 đăng nhập riêng.
 
@@ -192,8 +200,10 @@ Mini-Project-IS207/
 
 ## 4. Mô hình dữ liệu (Database Schema & ERD)
 
-Database nghiệp vụ gồm 9 bảng: tài khoản, hồ sơ người bệnh, chuyên khoa, bác sĩ,
-bệnh viện, loại dịch vụ khám, khung giờ, lượt đặt lịch và thanh toán. `SLOTS`
+Database nghiệp vụ gồm 13 bảng: 9 bảng nền bên dưới và 4 bảng Sprint 3
+`hospital_departments`, `ticket_sequences`, `tickets`, `refund_requests`.
+ERD đầy đủ và các ràng buộc được duy trì tại [database-schema.md](docs/database-schema.md).
+`SLOTS`
 dùng mô hình đa hình qua cặp `owner_type`/`owner_id`: một slot thuộc bác sĩ hoặc
 bệnh viện. `BOOKINGS` cũng dùng `booking_type` để phân biệt đặt bác sĩ và đặt
 dịch vụ tại bệnh viện.

@@ -119,7 +119,7 @@ class PaymentService
     }
 
     /**
-     * Simulated gateway. Slot -> booking -> payment locks serialize processing and expiration.
+     * Simulated gateway. User -> hospital -> slot -> booking -> payment locks serialize processing and expiration.
      * Expected failures are returned from the transaction and thrown after its commit.
      */
     public function processPayment(int|Payment $paymentParam, int $userId, ?string $otp = null): Payment
@@ -128,8 +128,13 @@ class PaymentService
             $reference = $this->resolvePayment($paymentParam, $userId);
             $booking = $this->lockBooking($reference->booking_id, $userId);
             $payment = $this->resolvePayment($reference->id, $userId, true);
+            $booking->setRelation('payment', $payment);
 
             if ($payment->isPaid()) {
+                if ($booking->status === 'confirmed') {
+                    app(TicketService::class)->issue($booking);
+                }
+
                 return $this->loadPaymentDetails($payment);
             }
             if ($payment->isExpired() || $this->holds->releaseIfOverdue($booking)) {
@@ -140,6 +145,15 @@ class PaymentService
             }
 
             $invoice = $this->buildInvoice($booking);
+            // Several holds may precede payment. Recheck under the account lock,
+            // using a current read even if resolution established an older snapshot.
+            $upcoming = Booking::where('user_id', $userId)->where('status', 'confirmed')
+                ->whereHas('slot', fn ($q) => $q->whereDate('work_date', '>', today())
+                    ->orWhere(fn ($q) => $q->whereDate('work_date', today())->where('start_time', '>', now()->format('H:i:s'))))
+                ->lockForUpdate()->get(['bookings.id'])->count();
+            if ($upcoming >= 3) {
+                throw new DomainException('Tài khoản đã có 3 lịch khám xác nhận chưa diễn ra.');
+            }
             if (! config('payment.demo_gateway.enabled', false)) {
                 throw new DomainException('Gateway giả lập chưa được bật.');
             }
@@ -159,6 +173,8 @@ class PaymentService
             $booking->status = 'confirmed';
             $booking->slot_hold_expires_at = null;
             $booking->save();
+            $booking->unsetRelation('payment');
+            app(TicketService::class)->issue($booking);
             // M5 already counted this hold; successful payment must NOT increment slot again.
 
             return $this->loadPaymentDetails($payment);
@@ -259,8 +275,8 @@ class PaymentService
     {
         $this->ensureBookingCanBePaid($booking);
 
-        $examFee = $this->toVndAmount($booking->examType->price, 'Giá khám');
-        $serviceFee = $this->toVndAmount(config('payment.service_fee', 10000), 'Phí dịch vụ');
+        $examFee = HospitalBookingPolicy::EXAM_FEE;
+        $serviceFee = HospitalBookingPolicy::SERVICE_FEE;
         $totalAmount = $examFee + $serviceFee;
 
         return [
@@ -305,6 +321,7 @@ class PaymentService
             ],
             'slot_hold_expires_at' => $booking->slot_hold_expires_at?->toIso8601String(),
             'is_hold_expired' => false,
+            'demo_gateway' => (bool) config('payment.demo_gateway.enabled'),
             'available_methods' => array_map(
                 static fn (PaymentMethod $method): array => [
                     'id' => $method->value,
@@ -342,12 +359,16 @@ class PaymentService
             throw new DomainException('Không tìm thấy hồ sơ bệnh nhân của đơn đặt khám.');
         }
 
-        if (! $booking->hospital) {
+        if (! $booking->hospital || $booking->hospital->trashed()) {
             throw new DomainException('Không tìm thấy cơ sở khám của đơn đặt khám.');
         }
 
-        if (! $booking->examType) {
+        if (! $booking->examType || $booking->examType->trashed()) {
             throw new DomainException('Không tìm thấy loại hình khám hoặc giá khám.');
+        }
+
+        if (! $booking->hospital->accepting_bookings) {
+            throw new DomainException('Bệnh viện đang ngừng tiếp nhận đặt khám.');
         }
 
         if (! $booking->slot) {
@@ -421,8 +442,11 @@ class PaymentService
 
     private function loadPaymentDetails(Payment $payment): Payment
     {
-        $payment->refresh();
-        $payment->load(['booking.hospital', 'booking.patientProfile', 'booking.examType']);
+        $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+        $payment->load([
+            'booking' => fn ($query) => $query->lockForUpdate(),
+            'booking.hospital', 'booking.patientProfile', 'booking.examType',
+        ]);
 
         return $payment;
     }

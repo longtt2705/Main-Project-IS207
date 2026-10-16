@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { 
   Calendar, 
@@ -17,7 +17,6 @@ import {
   LogOut, 
   ShieldCheck, 
   UserCheck, 
-  Phone, 
   X,
   Loader2,
   Check,
@@ -44,10 +43,6 @@ import { Badge } from "@/components/ui/badge"
 export default function MyBookingsPage() {
   const { 
     user, 
-    patientProfiles: contextProfiles, 
-    addPatientProfile, 
-    updatePatientProfile: contextUpdateProfile, 
-    deletePatientProfile: contextDeleteProfile,
     updateUserProfile,
     logout 
   } = useAuth()
@@ -66,63 +61,28 @@ export default function MyBookingsPage() {
   // ==========================================
   const [bookings, setBookings] = useState([])
   const [loadingBookings, setLoadingBookings] = useState(true)
+  const [bookingError, setBookingError] = useState('')
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState(null)
   const [statusFilter, setStatusFilter] = useState("all") // all | pending | confirmed | completed | cancelled
   const [searchQuery, setSearchQuery] = useState("")
   const [cancellingBooking, setCancellingBooking] = useState(null)
   const [cancelReason, setCancelReason] = useState("")
   const [bookingActionMsg, setBookingActionMsg] = useState("")
 
-  // Load Bookings
-  const loadBookings = async () => {
-    setLoadingBookings(true)
-    try {
-      const res = await fetchUserBookings({ status: statusFilter, q: searchQuery })
-      setBookings(res.data || [])
-    } catch (err) {
-      console.error("Lỗi tải danh sách bookings:", err)
-    } finally {
-      setLoadingBookings(false)
-    }
-  }
-
+  const [refreshBookings, setRefreshBookings] = useState(0)
+  const loadBookings = () => setRefreshBookings((value) => value + 1)
   useEffect(() => {
-    loadBookings()
-  }, [statusFilter, searchQuery])
+    let active = true
+    fetchUserBookings({ status: statusFilter, q: searchQuery, page }).then((res) => {
+      if (active) { setBookings(res.data || []); setPagination(res.pagination); setBookingError('') }
+    }).catch((err) => {
+      if (active) { setBookingError(err.message); setBookings([]) }
+    }).finally(() => { if (active) setLoadingBookings(false) })
+    return () => { active = false }
+  }, [statusFilter, searchQuery, page, refreshBookings])
 
-  // Status counts based on all bookings
-  const counts = useMemo(() => {
-    return {
-      all: bookings.length,
-      pending: bookings.filter((b) => b.status === "pending").length,
-      confirmed: bookings.filter((b) => b.status === "confirmed").length,
-      completed: bookings.filter((b) => b.status === "completed").length,
-      cancelled: bookings.filter((b) => b.status === "cancelled").length,
-    }
-  }, [bookings])
-
-  // Filtered Bookings for display
-  const displayedBookings = useMemo(() => {
-    let result = bookings
-    if (statusFilter !== "all") {
-      result = result.filter((b) => b.status === statusFilter)
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      result = result.filter((b) => {
-        return (
-          b.code?.toLowerCase().includes(q) ||
-          b.doctor_name?.toLowerCase().includes(q) ||
-          b.doctor?.name?.toLowerCase().includes(q) ||
-          b.hospital_name?.toLowerCase().includes(q) ||
-          b.hospital?.name?.toLowerCase().includes(q) ||
-          b.patient_name?.toLowerCase().includes(q) ||
-          b.patient_profile?.full_name?.toLowerCase().includes(q) ||
-          b.specialty_name?.toLowerCase().includes(q)
-        )
-      })
-    }
-    return result
-  }, [bookings, statusFilter, searchQuery])
+  const displayedBookings = bookings
 
   // Handle Cancel Booking
   const handleConfirmCancel = async () => {
@@ -142,7 +102,7 @@ export default function MyBookingsPage() {
   // ==========================================
   // STATE: PATIENT PROFILES (CRUD)
   // ==========================================
-  const [profiles, setProfiles] = useState(contextProfiles || [])
+  const [profiles, setProfiles] = useState([])
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [editingProfile, setEditingProfile] = useState(null)
   const [deletingProfile, setDeletingProfile] = useState(null)
@@ -151,6 +111,7 @@ export default function MyBookingsPage() {
     dob: "",
     gender: "male",
     phone: "",
+    national_id: "",
     relationship: "Bản thân",
   })
   const [profileFormError, setProfileFormError] = useState("")
@@ -164,12 +125,15 @@ export default function MyBookingsPage() {
         setProfiles(res.data)
       }
     } catch (err) {
-      console.error("Lỗi tải hồ sơ bệnh nhân:", err)
+      setProfileFormError(err.message)
     }
   }
 
   useEffect(() => {
-    loadProfiles()
+    let active = true
+    fetchPatientProfiles().then((res) => { if (active) setProfiles(res.data || []) })
+      .catch((err) => { if (active) setProfileFormError(err.message) })
+    return () => { active = false }
   }, [])
 
   // Open modal create
@@ -180,6 +144,7 @@ export default function MyBookingsPage() {
       dob: "1995-01-01",
       gender: "male",
       phone: user?.phone || "",
+      national_id: "",
       relationship: "Bản thân",
     })
     setProfileFormError("")
@@ -194,6 +159,7 @@ export default function MyBookingsPage() {
       dob: profile.dob ? profile.dob.split("T")[0] : "1995-01-01",
       gender: profile.gender || "male",
       phone: profile.phone || "",
+      national_id: profile.national_id || "",
       relationship: profile.relationship || "Bản thân",
     })
     setProfileFormError("")
@@ -217,13 +183,11 @@ export default function MyBookingsPage() {
     try {
       if (editingProfile) {
         // Update
-        const res = await apiUpdatePatientProfile(editingProfile.id, profileForm)
-        contextUpdateProfile(editingProfile.id, res.data || profileForm)
+        await apiUpdatePatientProfile(editingProfile.id, profileForm)
         setProfileActionMsg("Cập nhật hồ sơ bệnh nhân thành công!")
       } else {
         // Create
-        const res = await createPatientProfile(profileForm)
-        addPatientProfile(res.data || profileForm)
+        await createPatientProfile(profileForm)
         setProfileActionMsg("Thêm hồ sơ bệnh nhân mới thành công!")
       }
       setProfileModalOpen(false)
@@ -239,7 +203,6 @@ export default function MyBookingsPage() {
     if (!deletingProfile) return
     try {
       await apiDeletePatientProfile(deletingProfile.id)
-      contextDeleteProfile(deletingProfile.id)
       setProfileActionMsg(`Đã xóa hồ sơ "${deletingProfile.full_name}" thành công!`)
       setDeletingProfile(null)
       loadProfiles()
@@ -261,16 +224,6 @@ export default function MyBookingsPage() {
   const [savingAccount, setSavingAccount] = useState(false)
   const [accountSuccessMsg, setAccountSuccessMsg] = useState("")
   const [accountErrorMsg, setAccountErrorMsg] = useState("")
-
-  useEffect(() => {
-    if (user) {
-      setAccountForm({
-        name: user.name || "",
-        phone: user.phone || "",
-        email: user.email || "",
-      })
-    }
-  }, [user])
 
   const handleSaveAccount = async (e) => {
     e.preventDefault()
@@ -311,6 +264,12 @@ export default function MyBookingsPage() {
   // Status Badge UI helper
   const getStatusBadge = (status) => {
     switch (status) {
+      case "pending_payment":
+        return <Badge variant="warning">Chờ thanh toán</Badge>
+      case "checked_in":
+        return <Badge variant="success">Đã check-in</Badge>
+      case "no_show":
+        return <Badge variant="danger">Vắng mặt</Badge>
       case "pending":
         return <Badge variant="warning" className="gap-1 font-semibold"><Clock className="w-3 h-3" /> Chờ Duyệt</Badge>
       case "confirmed":
@@ -356,7 +315,7 @@ export default function MyBookingsPage() {
 
             <div className="flex items-center gap-2.5">
               <Button asChild className="bg-sky-600 hover:bg-sky-700 text-white shadow-sm font-semibold text-xs sm:text-sm">
-                <Link to="/doctors" className="flex items-center gap-1.5">
+                <Link to="/hospitals" className="flex items-center gap-1.5">
                   <Stethoscope className="w-4 h-4" />
                   <span>Đặt Lịch Khám Mới</span>
                 </Link>
@@ -446,7 +405,7 @@ export default function MyBookingsPage() {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
                   placeholder="Tìm kiếm theo tên bác sĩ, bệnh viện, mã phiếu hoặc tên người khám..."
                   className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all"
                 />
@@ -460,61 +419,13 @@ export default function MyBookingsPage() {
                 )}
               </div>
 
-              {/* Status Filter Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    statusFilter === "all"
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  Tất cả ({counts.all})
-                </button>
-                <button
-                  onClick={() => setStatusFilter("pending")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    statusFilter === "pending"
-                      ? "bg-amber-600 text-white shadow-sm"
-                      : "bg-amber-50 text-amber-800 hover:bg-amber-100/70 border border-amber-200/60"
-                  }`}
-                >
-                  Chờ duyệt ({counts.pending})
-                </button>
-                <button
-                  onClick={() => setStatusFilter("confirmed")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    statusFilter === "confirmed"
-                      ? "bg-emerald-600 text-white shadow-sm"
-                      : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100/70 border border-emerald-200/60"
-                  }`}
-                >
-                  Đã xác nhận ({counts.confirmed})
-                </button>
-                <button
-                  onClick={() => setStatusFilter("completed")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    statusFilter === "completed"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "bg-purple-50 text-purple-800 hover:bg-purple-100/70 border border-purple-200/60"
-                  }`}
-                >
-                  Đã hoàn thành ({counts.completed})
-                </button>
-                <button
-                  onClick={() => setStatusFilter("cancelled")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    statusFilter === "cancelled"
-                      ? "bg-rose-600 text-white shadow-sm"
-                      : "bg-rose-50 text-rose-800 hover:bg-rose-100/70 border border-rose-200/60"
-                  }`}
-                >
-                  Đã hủy ({counts.cancelled})
-                </button>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries({ all: 'Tất cả', upcoming: 'Sắp khám', completed: 'Đã khám', cancelled: 'Đã hủy / Vắng mặt' }).map(([value, label]) => <Button key={value} variant={statusFilter === value ? 'default' : 'outline'} onClick={() => { setStatusFilter(value); setPage(1) }}>{label}</Button>)}
               </div>
             </div>
 
+            {bookingError && <p role="alert" className="text-red-700">{bookingError}</p>}
+            {pagination && pagination.last_page > 1 && <div className="flex gap-3 items-center"><Button disabled={page <= 1} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page} / {pagination.last_page}</span><Button disabled={page >= pagination.last_page} onClick={() => setPage(page + 1)}>Sau</Button></div>}
             {/* Bookings List */}
             {loadingBookings ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
@@ -535,7 +446,7 @@ export default function MyBookingsPage() {
                   </p>
                 </div>
                 <Button asChild className="bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs">
-                  <Link to="/doctors">
+                  <Link to="/hospitals">
                     <Search className="w-4 h-4 mr-1.5" />
                     Khám phá Bác sĩ & Đặt lịch
                   </Link>
@@ -544,7 +455,7 @@ export default function MyBookingsPage() {
             ) : (
               <div className="space-y-4">
                 {displayedBookings.map((b) => {
-                  const canCancel = b.status === "pending" || b.status === "confirmed"
+                  const canCancel = ["pending", "pending_payment", "confirmed"].includes(b.status)
                   const doctorName = b.doctor?.name || b.doctor_name || "Bác sĩ chuyên khoa"
                   const hospitalName = b.hospital?.name || b.hospital_name || "Cơ sở Y tế MedSi"
                   const patientName = b.patient_profile?.full_name || b.patient_name || "Bệnh nhân"
@@ -617,7 +528,7 @@ export default function MyBookingsPage() {
                             Tổng tiền & Thanh toán
                           </span>
                           <p className="text-base font-black text-sky-600">
-                            {formatCurrency(b.payment?.total_amount || 420000)}
+                            {formatCurrency(b.payment?.total_amount ?? 0)}
                           </p>
                           <div className="flex items-center md:justify-end gap-1.5">
                             <span className="text-[11px] text-slate-500">
@@ -664,19 +575,13 @@ export default function MyBookingsPage() {
                             </Button>
                           )}
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.print()}
-                            className="text-slate-600 hover:text-slate-900 text-xs h-8"
-                          >
-                            <Printer className="w-3.5 h-3.5 mr-1" />
-                            In phiếu
-                          </Button>
+                          {b.ticket && <Button asChild variant="outline" size="sm"><Link to={`/bookings/${b.id}/ticket`}><Printer className="w-3.5 h-3.5 mr-1" />Xem phiếu / QR</Link></Button>}
+                          {b.status === 'pending_payment' && <Button asChild size="sm"><Link to={`/payment?booking_id=${b.id}`}>Thanh toán</Link></Button>}
+                          {b.refund_request && <span className="text-xs">Yêu cầu hoàn: {formatCurrency(b.refund_request.amount)} ({b.refund_request.status === 'pending' ? 'Chờ xử lý' : b.refund_request.status})</span>}
 
                           {b.status === "completed" && (
                             <Button asChild size="sm" className="bg-sky-600 text-white text-xs h-8">
-                              <Link to={`/doctors/${b.doctor_id || 1}`}>
+                              <Link to={b.booking_type === "hospital" ? `/hospitals/${b.hospital?.id}` : `/doctors/${b.doctor?.id}`}>
                                 <RotateCcw className="w-3.5 h-3.5 mr-1" />
                                 Đặt tái khám
                               </Link>
@@ -697,6 +602,7 @@ export default function MyBookingsPage() {
         {/* ======================================================== */}
         {activeMainTab === "profiles" && (
           <div className="space-y-6 animate-in fade-in-50">
+            {profileFormError && <p role="alert" className="text-red-700">{profileFormError}</p>}
             {profileActionMsg && (
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -1022,6 +928,13 @@ export default function MyBookingsPage() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label htmlFor="profile-national-id" className="font-semibold text-slate-700 block">Số CCCD (không bắt buộc)</label>
+                <input id="profile-national-id" inputMode="numeric" maxLength={12} autoComplete="off"
+                  value={profileForm.national_id}
+                  onChange={(e) => setProfileForm({ ...profileForm, national_id: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500" />
+              </div>
               <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
                 <Button
                   type="button"
@@ -1102,7 +1015,7 @@ export default function MyBookingsPage() {
             </div>
 
             <p className="text-xs text-slate-600">
-              Bạn có chắc chắn muốn hủy lịch khám với <strong>{cancellingBooking.doctor_name || cancellingBooking.doctor?.name || "Bác sĩ"}</strong> vào ngày <strong>{formatDateVN(cancellingBooking.work_date || cancellingBooking.slot?.work_date)}</strong>? Khung giờ này sẽ được giải phóng cho bệnh nhân khác.
+              Bạn có chắc chắn muốn hủy lịch khám với <strong>{cancellingBooking.doctor_name || cancellingBooking.doctor?.name || "Bác sĩ"}</strong> vào ngày <strong>{formatDateVN(cancellingBooking.work_date || cancellingBooking.slot?.work_date)}</strong>? Lịch bệnh viện đã thanh toán chỉ được hủy trực tuyến trước ca khám ít nhất 24 giờ. Yêu cầu hoàn phí khám sẽ được gửi sau khi hủy; phí tiện ích không được hoàn khi bệnh nhân tự hủy.
             </p>
 
             <div className="space-y-1.5">

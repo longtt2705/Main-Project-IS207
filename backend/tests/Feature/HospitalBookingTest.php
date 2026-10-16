@@ -26,16 +26,21 @@ class HospitalBookingTest extends TestCase
     use RefreshDatabase;
 
     private BookingService $bookingService;
+
     private User $user;
+
     private PatientProfile $patientProfile;
+
     private Hospital $hospital;
+
     private ExamType $examType;
+
     private Slot $slot;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->bookingService = new BookingService();
+        $this->bookingService = new BookingService;
 
         // Khởi tạo người dùng và hồ sơ bệnh nhân qua Factory
         $this->user = User::factory()->create();
@@ -62,7 +67,7 @@ class HospitalBookingTest extends TestCase
         $this->slot = Slot::factory()->forHospital($this->hospital, 5)->create([
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '09:00:00',
-            'end_time' => '10:00:00',
+            'end_time' => '09:30:00',
             'capacity' => 5,
             'booked_count' => 0,
             'status' => 'available',
@@ -116,8 +121,9 @@ class HospitalBookingTest extends TestCase
         $this->assertDatabaseHas('payments', [
             'booking_id' => $booking->id,
             'method' => 'qr_pay',
-            'exam_fee' => 750000.00,
-            'total_amount' => 750000.00,
+            'exam_fee' => 200000.00,
+            'service_fee' => 20000.00,
+            'total_amount' => 220000.00,
             'status' => 'pending',
         ]);
     }
@@ -127,7 +133,7 @@ class HospitalBookingTest extends TestCase
         $singleSlot = Slot::factory()->forHospital($this->hospital, 1)->create([
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '14:00:00',
-            'end_time' => '15:00:00',
+            'end_time' => '14:30:00',
             'capacity' => 1,
             'booked_count' => 0,
             'status' => 'available',
@@ -371,6 +377,9 @@ class HospitalBookingTest extends TestCase
 
     public function test_concurrency_pessimistic_locking_prevents_overbooking(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            $this->markTestSkipped('InnoDB locking requires the MySQL test database.');
+        }
         // Trong môi trường test có RefreshDatabase, commit transaction hiện tại của connection chính
         // để connection phụ (mysql_concurrency) có thể nhìn thấy dữ liệu slot đã tạo.
         while (DB::transactionLevel() > 0) {
@@ -385,7 +394,7 @@ class HospitalBookingTest extends TestCase
         $singleSlot = Slot::factory()->forHospital($this->hospital, 1)->create([
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '16:00:00',
-            'end_time' => '17:00:00',
+            'end_time' => '16:30:00',
             'capacity' => 1,
             'booked_count' => 0,
             'status' => 'available',

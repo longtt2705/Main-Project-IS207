@@ -16,6 +16,8 @@ use App\Models\Hospital;
 use App\Models\PatientProfile;
 use App\Models\Payment;
 use App\Models\Slot;
+use App\Models\User;
+use App\Services\Payment\SlotHoldService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -25,28 +27,34 @@ class BookingService
 {
     // Constants định danh trạng thái và loại booking
     public const TYPE_HOSPITAL = 'hospital';
+
     public const TYPE_DOCTOR = 'doctor';
 
     public const STATUS_PENDING_PAYMENT = 'pending_payment';
+
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_CONFIRMED = 'confirmed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public const SLOT_AVAILABLE = 'available';
+
     public const SLOT_FULL = 'full';
+
     public const SLOT_BLOCKED = 'blocked';
 
     /**
      * Lấy danh sách lịch sử booking của một user có phân trang và bộ lọc.
      *
-     * @param  int  $userId
      * @param  array<string, mixed>  $filters
-     * @return LengthAwarePaginator
      */
     public function getUserBookings(
         int $userId,
         array $filters = []
     ): LengthAwarePaginator {
+        app(SlotHoldService::class)->expireOverdueHolds();
+        app(TicketService::class)->expireUnused();
         $query = Booking::query()
             ->forUser($userId)
             ->with([
@@ -56,10 +64,15 @@ class BookingService
                 'examType',
                 'slot',
                 'payment',
+                'ticket',
             ]);
 
         $status = $filters['status'] ?? null;
-        if (! empty($status)) {
+        if ($status === 'upcoming') {
+            $query->whereIn('status', ['pending', 'pending_payment', 'confirmed', 'checked_in']);
+        } elseif ($status === 'cancelled') {
+            $query->whereIn('status', ['cancelled', 'rejected', 'no_show']);
+        } elseif (! empty($status) && $status !== 'all') {
             $query->where('status', $status);
         }
 
@@ -67,6 +80,7 @@ class BookingService
         if (! empty($keyword)) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('code', 'like', "%{$keyword}%")
+                    ->orWhereHas('ticket', fn ($t) => $t->where('ticket_code', 'like', "%{$keyword}%"))
                     ->orWhereHas('patientProfile', function ($pQuery) use ($keyword) {
                         $pQuery->where('full_name', 'like', "%{$keyword}%");
                     })
@@ -79,7 +93,7 @@ class BookingService
             });
         }
 
-        $perPage = (int) ($filters['per_page'] ?? 10);
+        $perPage = max(1, min(100, (int) ($filters['per_page'] ?? 10)));
 
         return $query
             ->orderByDesc('created_at')
@@ -89,9 +103,7 @@ class BookingService
     /**
      * Tạo lịch khám tại bệnh viện với Pessimistic Locking, DB Transaction và giữ chỗ thanh toán.
      *
-     * @param  int  $userId
      * @param  array<string, mixed>  $data
-     * @return Booking
      *
      * @throws PatientProfileNotFoundException
      * @throws HospitalNotFoundException
@@ -103,19 +115,25 @@ class BookingService
     public function createHospitalBooking(int $userId, array $data): Booking
     {
         return DB::transaction(function () use ($userId, $data) {
+            User::whereKey($userId)->lockForUpdate()->firstOrFail();
+            // Acquire the hospital lock before any snapshot read (InnoDB REPEATABLE READ).
+            // 2. Kiểm tra bệnh viện tồn tại
+            $hospital = Hospital::whereKey($data['hospital_id'])->lockForUpdate()->first();
+            if (! $hospital) {
+                throw new HospitalNotFoundException;
+            }
+            if (! $hospital->accepting_bookings) {
+                throw new SlotUnavailableException('Bệnh viện đang ngừng tiếp nhận đặt khám.');
+            }
+
+            // Serialize bookings across slots for account and department/shift limits.
             // 1. Kiểm tra hồ sơ bệnh nhân phải thuộc tài khoản user hiện tại
             $patientProfile = PatientProfile::where('id', $data['patient_profile_id'])
                 ->where('user_id', $userId)
                 ->first();
 
             if (! $patientProfile) {
-                throw new PatientProfileNotFoundException();
-            }
-
-            // 2. Kiểm tra bệnh viện tồn tại
-            $hospital = Hospital::find($data['hospital_id']);
-            if (! $hospital) {
-                throw new HospitalNotFoundException();
+                throw new PatientProfileNotFoundException;
             }
 
             // 3. Kiểm tra loại hình dịch vụ khám phải thuộc về bệnh viện này
@@ -124,7 +142,7 @@ class BookingService
                 ->first();
 
             if (! $examType) {
-                throw new ExamTypeMismatchException();
+                throw new ExamTypeMismatchException;
             }
 
             // 4. Khóa bi quan dòng slot:
@@ -135,16 +153,23 @@ class BookingService
                 ->first();
 
             if (! $slot) {
-                throw new InvalidSlotException();
+                throw new InvalidSlotException;
             }
 
             // Tự động kiểm tra và giải phóng giữ chỗ hết hạn khi có người khác thử đặt
-            app(\App\Services\Payment\SlotHoldService::class)->releaseOverdueHoldsForSlot($slot);
+            app(SlotHoldService::class)->releaseOverdueHoldsForSlot($slot);
             $slot->refresh();
+
+            try {
+                HospitalBookingPolicy::validateSlot($slot);
+            } catch (\DomainException $e) {
+                throw new SlotUnavailableException($e->getMessage());
+            }
+            $this->validateHospitalLimits($userId, $patientProfile->id, $examType, $slot);
 
             // Kiểm tra trạng thái và sức chứa của slot
             if ($slot->booked_count >= $slot->capacity || $slot->status !== self::SLOT_AVAILABLE) {
-                throw new SlotUnavailableException();
+                throw new SlotUnavailableException;
             }
 
             // Kiểm tra ngày khám không được ở trong quá khứ
@@ -168,8 +193,8 @@ class BookingService
                     && $existingBooking->slot_hold_expires_at
                     && now()->greaterThanOrEqualTo($existingBooking->slot_hold_expires_at)
                 ) {
-                    app(\App\Services\Payment\SlotHoldService::class)->releaseIfOverdue(
-                        app(\App\Services\Payment\SlotHoldService::class)->lockBooking($existingBooking)
+                    app(SlotHoldService::class)->releaseIfOverdue(
+                        app(SlotHoldService::class)->lockBooking($existingBooking)
                     );
                     $slot->refresh();
                 } else {
@@ -178,7 +203,7 @@ class BookingService
             }
 
             // 6. Tính thời hạn giữ chỗ tạm thời (mặc định 15 phút)
-            $holdMinutes = isset($data['hold_minutes']) ? (int) $data['hold_minutes'] : 15;
+            $holdMinutes = 15;
             $slotHoldExpiresAt = now()->addMinutes($holdMinutes);
 
             // 7. Tạo bản ghi Booking
@@ -202,14 +227,14 @@ class BookingService
                 $slot->update(['status' => self::SLOT_FULL]);
             }
 
-            // 9. Tạo Payment: status = 'pending', total_amount bằng giá của examType
+            // 9. Snapshot the agreed Sprint 3 hospital fees at reservation.
             $paymentMethod = $data['payment_method'] ?? 'qr_pay';
             Payment::create([
                 'booking_id' => $booking->id,
                 'method' => $paymentMethod,
-                'exam_fee' => $examType->price,
-                'service_fee' => 0,
-                'total_amount' => $examType->price,
+                'exam_fee' => HospitalBookingPolicy::EXAM_FEE,
+                'service_fee' => HospitalBookingPolicy::SERVICE_FEE,
+                'total_amount' => HospitalBookingPolicy::EXAM_FEE + HospitalBookingPolicy::SERVICE_FEE,
                 'status' => 'pending',
             ]);
 
@@ -217,12 +242,41 @@ class BookingService
         });
     }
 
+    private function validateHospitalLimits(int $userId, int $profileId, ExamType $exam, Slot $slot): void
+    {
+        $department = $exam->department;
+        if (! $department || (int) $department->hospital_id !== (int) $exam->hospital_id) {
+            throw new SlotUnavailableException('Dịch vụ chưa được cấu hình chuyên khoa bệnh viện.');
+        }
+        $upcoming = Booking::where('user_id', $userId)->where('status', 'confirmed')
+            ->whereHas('slot', fn ($q) => $q->whereDate('work_date', '>', today())
+                ->orWhere(fn ($q) => $q->whereDate('work_date', today())->where('start_time', '>', now()->format('H:i:s'))))->count();
+        if ($upcoming >= 3) {
+            throw new SlotUnavailableException('Tài khoản đã có 3 lịch khám xác nhận chưa diễn ra.');
+        }
+        $active = Booking::whereNotIn('status', ['cancelled', 'rejected', 'no_show'])
+            ->where(fn ($q) => $q->where('status', '!=', 'pending_payment')->orWhere('slot_hold_expires_at', '>', now()));
+        $sameSpecialty = (clone $active)->where('patient_profile_id', $profileId)
+            ->whereHas('slot', fn ($q) => $q->whereDate('work_date', $slot->work_date))
+            ->where(fn ($q) => $q->whereHas('examType.department', fn ($q) => $q->where('specialty_id', $department->specialty_id))
+                ->orWhereHas('doctor', fn ($q) => $q->where('specialty_id', $department->specialty_id)))->exists();
+        if ($sameSpecialty) {
+            throw new BookingAlreadyExistsException('Hồ sơ đã có lịch cùng chuyên khoa trong ngày này.');
+        }
+        $morning = HospitalBookingPolicy::shift($slot) === 'morning';
+        $count = (clone $active)->where('hospital_id', $exam->hospital_id)
+            ->whereHas('examType', fn ($q) => $q->where('hospital_department_id', $department->id))
+            ->whereHas('slot', fn ($q) => $q->whereDate('work_date', $slot->work_date)
+                ->whereBetween('start_time', $morning ? ['07:00:00', '11:29:59'] : ['13:00:00', '16:29:59']))->count();
+        if ($count >= $department->max_shift_capacity) {
+            throw new SlotUnavailableException('Ca khám đã hết chỗ. Vui lòng chọn ca hoặc ngày khác.');
+        }
+    }
+
     /**
      * Tạo lịch khám với bác sĩ kèm Pessimistic Locking và DB Transaction.
      *
      * @param  array<string, mixed>  $data
-     * @param  int  $userId
-     * @return Booking
      *
      * @throws PatientProfileNotFoundException
      * @throws SlotUnavailableException
@@ -247,7 +301,7 @@ class BookingService
                 ->first();
 
             if (! $patientProfile) {
-                throw new PatientProfileNotFoundException();
+                throw new PatientProfileNotFoundException;
             }
 
             // 2. Khóa bi quan dòng slot (Pessimistic Locking):
@@ -283,7 +337,7 @@ class BookingService
 
             // 4. Kiểm tra sức chứa và trạng thái khả dụng của slot
             if ($slot->status !== self::SLOT_AVAILABLE || $slot->booked_count >= $slot->capacity) {
-                throw new SlotUnavailableException();
+                throw new SlotUnavailableException;
             }
 
             // 5. doctor_id: bắt buộc lấy từ slot (owner_id) vì slot owner_type = doctor
@@ -316,10 +370,6 @@ class BookingService
     /**
      * Hủy lịch khám với bác sĩ của user trong DB Transaction.
      *
-     * @param  int  $bookingId
-     * @param  int  $userId
-     * @param  string|null  $reason
-     * @return Booking
      *
      * @throws BookingNotFoundException
      * @throws AuthorizationException
@@ -335,7 +385,7 @@ class BookingService
             $booking = Booking::lockForUpdate()->find($bookingId);
 
             if (! $booking) {
-                throw new BookingNotFoundException();
+                throw new BookingNotFoundException;
             }
 
             // 2. Kiểm tra booking phải thuộc đúng user_id hiện tại (403 nếu không thuộc)
@@ -382,9 +432,6 @@ class BookingService
     /**
      * Lấy thông tin chi tiết một lịch khám của user kèm các quan hệ liên quan.
      *
-     * @param  int  $bookingId
-     * @param  int  $userId
-     * @return Booking
      *
      * @throws BookingNotFoundException
      * @throws AuthorizationException
@@ -411,7 +458,7 @@ class BookingService
                 throw new AuthorizationException('Bạn không có quyền xem thông tin phiếu khám này.');
             }
 
-            throw new BookingNotFoundException();
+            throw new BookingNotFoundException;
         }
 
         return $booking;

@@ -22,16 +22,16 @@ class SlotFactory extends Factory
     public function definition(): array
     {
         [$startTime, $endTime] = fake()->randomElement([
-            ['08:00:00', '09:00:00'],
-            ['09:00:00', '10:00:00'],
-            ['14:00:00', '15:00:00'],
-            ['15:00:00', '16:00:00'],
+            ['08:00:00', '08:30:00'],
+            ['09:00:00', '09:30:00'],
+            ['14:00:00', '14:30:00'],
+            ['15:00:00', '15:30:00'],
         ]);
 
         return [
             'owner_type' => null,
             'owner_id' => null,
-            'work_date' => fake()->dateTimeBetween('today', '+7 days')->format('Y-m-d'),
+            'work_date' => fake()->dateTimeBetween('tomorrow', '+7 days')->format('Y-m-d'),
             'start_time' => $startTime,
             'end_time' => $endTime,
             'capacity' => 1,

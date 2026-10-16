@@ -16,6 +16,7 @@ class ExamType extends Model
         'hospital_id',
         'name',
         'price',
+        'hospital_department_id',
     ];
 
     protected function casts(): array
@@ -23,6 +24,11 @@ class ExamType extends Model
         return [
             'price' => 'decimal:2',
         ];
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(HospitalDepartment::class, 'hospital_department_id');
     }
 
     public function hospital(): BelongsTo

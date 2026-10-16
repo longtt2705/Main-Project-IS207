@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, Navigate, useSearchParams } from "react-router-dom"
 import { 
   Search, 
   MapPin, 
@@ -73,6 +73,8 @@ export default function SearchResultsPage() {
       return matchSearch && matchCity
     })
   }, [hospitals, searchTerm, selectedCity])
+
+  if (isClinic) return <Navigate to="/hospitals" replace />
 
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">

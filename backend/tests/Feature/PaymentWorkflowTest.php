@@ -72,7 +72,7 @@ class PaymentWorkflowTest extends TestCase
         $this->assertStringStartsWith('TXN', $paid->transaction_code);
         $this->assertSame($paid->transaction_code, $again->transaction_code);
         $this->assertTrue($paid->paid_at->equalTo($again->paid_at));
-        $this->assertEquals(160000, $paid->total_amount);
+        $this->assertEquals(220000, $paid->total_amount);
         $this->assertSame('confirmed', $this->booking->fresh()->status);
         $this->assertNull($this->booking->fresh()->slot_hold_expires_at);
         $this->assertSame(1, $this->booking->slot->fresh()->booked_count);
@@ -82,8 +82,8 @@ class PaymentWorkflowTest extends TestCase
     public function test_processing_m5_payment_directly_uses_invoice_fees(): void
     {
         $payment = $this->payments->processPayment($this->booking->payment, $this->user->id);
-        $this->assertEquals(10000, $payment->service_fee);
-        $this->assertEquals(160000, $payment->total_amount);
+        $this->assertEquals(20000, $payment->service_fee);
+        $this->assertEquals(220000, $payment->total_amount);
     }
 
     public function test_deadline_is_exclusive_and_releases_hold_exactly_once(): void
@@ -219,7 +219,7 @@ class PaymentWorkflowTest extends TestCase
             'total_amount' => 1, 'transaction_code' => 'FORGED', 'status' => 'refunded',
         ])->assertOk()->assertJsonPath('success', true)
             ->assertJsonPath('errors', null)->assertJsonPath('data.status.code', 'paid')
-            ->assertJsonPath('data.total_amount', 160000);
+            ->assertJsonPath('data.total_amount', 220000);
         $code = $this->booking->payment->fresh()->transaction_code;
         $this->assertNotSame('FORGED', $code);
         $this->postJson('/api/payments/confirm', ['payment_id' => $this->booking->payment->id])
@@ -406,6 +406,6 @@ class PaymentWorkflowTest extends TestCase
             ->assertOk()->assertJsonPath('data.booking_id', $this->booking->id)->assertJsonPath('errors', null);
         $this->postJson('/api/payments/create', ['booking_id' => $this->booking->code, 'method' => 'qr_pay'])
             ->assertCreated()->assertJsonPath('data.id', $this->booking->payment->id)
-            ->assertJsonPath('data.total_amount', 160000);
+            ->assertJsonPath('data.total_amount', 220000);
     }
 }

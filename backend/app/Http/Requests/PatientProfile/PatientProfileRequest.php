@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\PatientProfile;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PatientProfileRequest extends FormRequest
@@ -33,7 +34,7 @@ class PatientProfileRequest extends FormRequest
             $sanitized['relationship'] = trim($this->relationship);
         }
 
-        if (!empty($sanitized)) {
+        if (! empty($sanitized)) {
             $this->merge($sanitized);
         }
     }
@@ -41,17 +42,18 @@ class PatientProfileRequest extends FormRequest
     /**
      * Quy tắc kiểm tra tính hợp lệ của dữ liệu.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         $isUpdate = $this->isMethod('put') || $this->isMethod('patch');
 
         return [
-            'full_name'    => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:150'],
-            'dob'          => [$isUpdate ? 'sometimes' : 'required', 'date', 'before_or_equal:today'],
-            'gender'       => [$isUpdate ? 'sometimes' : 'required', 'in:male,female,other'],
-            'phone'        => ['nullable', 'string', 'max:20', 'regex:/^(0|\+84)[35789][0-9]{8}$/'],
+            'full_name' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:150'],
+            'dob' => [$isUpdate ? 'sometimes' : 'required', 'date', 'before_or_equal:today'],
+            'gender' => [$isUpdate ? 'sometimes' : 'required', 'in:male,female,other'],
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^(0|\+84)[35789][0-9]{8}$/'],
+            'national_id' => ['nullable', 'string', 'regex:/^[0-9]{12}$/'],
             'relationship' => [$isUpdate ? 'sometimes' : 'required', 'string', 'max:50'],
         ];
     }
@@ -64,20 +66,21 @@ class PatientProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'full_name.required'    => 'Họ và tên bệnh nhân không được để trống.',
-            'full_name.string'      => 'Họ và tên bệnh nhân phải là chuỗi ký tự.',
-            'full_name.max'         => 'Họ và tên bệnh nhân không được vượt quá 150 ký tự.',
-            'dob.required'          => 'Ngày sinh không được để trống.',
-            'dob.date'              => 'Ngày sinh không đúng định dạng ngày tháng.',
-            'dob.before_or_equal'   => 'Ngày sinh không được lớn hơn ngày hiện tại.',
-            'gender.required'       => 'Giới tính không được để trống.',
-            'gender.in'             => 'Giới tính phải là nam, nữ hoặc khác.',
-            'phone.string'          => 'Số điện thoại phải là chuỗi ký tự.',
-            'phone.max'             => 'Số điện thoại không được vượt quá 20 ký tự.',
-            'phone.regex'           => 'Số điện thoại không hợp lệ (phải là số di động Việt Nam hợp lệ 10 số, ví dụ 0901234567 hoặc +84901234567).',
+            'full_name.required' => 'Họ và tên bệnh nhân không được để trống.',
+            'full_name.string' => 'Họ và tên bệnh nhân phải là chuỗi ký tự.',
+            'full_name.max' => 'Họ và tên bệnh nhân không được vượt quá 150 ký tự.',
+            'dob.required' => 'Ngày sinh không được để trống.',
+            'dob.date' => 'Ngày sinh không đúng định dạng ngày tháng.',
+            'dob.before_or_equal' => 'Ngày sinh không được lớn hơn ngày hiện tại.',
+            'gender.required' => 'Giới tính không được để trống.',
+            'gender.in' => 'Giới tính phải là nam, nữ hoặc khác.',
+            'phone.string' => 'Số điện thoại phải là chuỗi ký tự.',
+            'national_id.regex' => 'Số CCCD phải gồm đúng 12 chữ số.',
+            'phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
+            'phone.regex' => 'Số điện thoại không hợp lệ (phải là số di động Việt Nam hợp lệ 10 số, ví dụ 0901234567 hoặc +84901234567).',
             'relationship.required' => 'Mối quan hệ không được để trống.',
-            'relationship.string'   => 'Mối quan hệ phải là chuỗi ký tự.',
-            'relationship.max'      => 'Mối quan hệ không được vượt quá 50 ký tự.',
+            'relationship.string' => 'Mối quan hệ phải là chuỗi ký tự.',
+            'relationship.max' => 'Mối quan hệ không được vượt quá 50 ký tự.',
         ];
     }
 }

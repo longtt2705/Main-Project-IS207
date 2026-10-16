@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 
 class BookingResource extends JsonResource
 {
@@ -19,6 +20,9 @@ class BookingResource extends JsonResource
             'code' => $this->code,
             'booking_type' => $this->booking_type,
             'status' => $this->status,
+            'slot_hold_expires_at' => $this->slot_hold_expires_at?->toIso8601String(),
+            'ticket' => $this->whenLoaded('ticket', fn () => $this->ticket?->only(['id', 'ticket_code', 'queue_number', 'status'])),
+            'refund_request' => $this->whenLoaded('payment', fn () => $this->payment ? DB::table('refund_requests')->where('payment_id', $this->payment->id)->first() : null),
             'symptoms' => $this->symptoms,
             'note' => $this->note,
             'created_at' => $this->created_at,

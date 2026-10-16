@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom"
+import { useParams, useNavigate, Link, Navigate, useSearchParams } from "react-router-dom"
 import { 
   ArrowLeft, 
   Star, 
@@ -112,6 +112,8 @@ export default function DoctorDetailPage() {
     sessionStorage.setItem("medsi_pending_booking", JSON.stringify(bookingContext))
     navigate("/booking/confirm")
   }
+
+  if (hospitalId) return <Navigate to={`/hospitals/${hospitalId}`} replace />
 
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">

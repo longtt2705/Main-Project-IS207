@@ -52,7 +52,7 @@ export default function HomePage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm">
-                <Link to="/doctors?type=hospital">
+                <Link to="/hospitals">
                   <Building2 className="w-4 h-4 mr-2 text-sky-600" />
                   Khám theo Phòng khám / BV
                 </Link>

@@ -4,25 +4,35 @@ namespace App\Services\Payment;
 
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
+use App\Models\Hospital;
 use App\Models\Payment;
 use App\Models\Slot;
+use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /** Payment-side hold lifecycle. M5 creates the hold and increments capacity. */
 class SlotHoldService
 {
-    /** Must run inside a transaction. Lock order matches hospital booking: slot -> booking -> payment. */
+    /** Must run inside a transaction. Lock order: user -> hospital -> slot -> booking -> payment. */
     public function lockBooking(Booking $reference): Booking
     {
         if (DB::transactionLevel() === 0) {
             throw new \LogicException('Slot hold locking requires a transaction.');
         }
 
+        User::whereKey($reference->user_id)->lockForUpdate()->firstOrFail();
+        $hospital = $reference->booking_type === 'hospital'
+            ? Hospital::withTrashed()->whereKey($reference->hospital_id)->lockForUpdate()->firstOrFail()
+            : null;
         $slot = Slot::query()->whereKey($reference->slot_id)->lockForUpdate()->firstOrFail();
         $booking = Booking::query()->whereKey($reference->id)->lockForUpdate()->firstOrFail();
         if ($booking->slot_id !== $slot->id) {
             throw new DomainException('Khung giờ của đơn đặt khám đã thay đổi. Vui lòng tải lại.');
+        }
+
+        if ($hospital) {
+            $booking->setRelation('hospital', $hospital);
         }
 
         return $booking->setRelation('slot', $slot);
@@ -83,7 +93,8 @@ class SlotHoldService
 
         $count = 0;
         foreach ($overdueBookings as $booking) {
-            $lockedBooking = $this->lockBooking($booking);
+            $slot = $slotParam instanceof Slot ? $slotParam->fresh() : Slot::findOrFail($slotId);
+            $lockedBooking = $booking->setRelation('slot', $slot);
             if ($this->releaseIfOverdue($lockedBooking)) {
                 $count++;
             }

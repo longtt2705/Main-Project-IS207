@@ -15,6 +15,13 @@ import AdminBookingsPage from "@/pages/Admin/AdminBookingsPage"
 import AdminCatalogPage from "@/pages/Admin/AdminCatalogPage"
 import NotFoundPage from "@/pages/NotFoundPage"
 
+import RequireAuth from '@/components/RequireAuth'
+import HospitalsPage from '@/pages/HospitalsPage'
+import HospitalBookingPage from '@/pages/HospitalBookingPage'
+import TicketPage from '@/pages/TicketPage'
+import ReceptionPage from '@/pages/ReceptionPage'
+import HospitalAdminPage from '@/pages/HospitalAdminPage'
+
 function App() {
   return (
     <AuthProvider>
@@ -24,6 +31,11 @@ function App() {
           <Route element={<PageLayout />}>
             {/* 1. Trang chủ */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/hospitals" element={<HospitalsPage />} />
+            <Route path="/hospitals/:id" element={<HospitalBookingPage />} />
+            <Route path="/bookings/:bookingId/ticket" element={<RequireAuth><TicketPage /></RequireAuth>} />
+            <Route path="/reception" element={<RequireAuth><ReceptionPage /></RequireAuth>} />
+            <Route path="/hospitals/:id/manage" element={<RequireAuth><HospitalAdminPage /></RequireAuth>} />
 
             {/* 2. Danh sách bác sĩ, bệnh viện */}
             <Route path="/doctors" element={<SearchResultsPage />} />
@@ -32,10 +44,10 @@ function App() {
             <Route path="/doctors/:id" element={<DoctorDetailPage />} />
 
             {/* 3.1. Xác nhận đặt lịch */}
-            <Route path="/booking/confirm" element={<BookingConfirmPage />} />
+            <Route path="/booking/confirm" element={<RequireAuth><BookingConfirmPage /></RequireAuth>} />
 
             {/* 3.2. Thanh toán đặt khám */}
-            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/payment" element={<RequireAuth><PaymentPage /></RequireAuth>} />
             <Route path="/payments" element={<Navigate to="/payment" replace />} />
 
             {/* 4. Đăng nhập / Đăng ký */}
@@ -43,7 +55,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* 5. Lịch sử đặt lịch của tôi */}
-            <Route path="/my-bookings" element={<MyBookingsPage />} />
+            <Route path="/my-bookings" element={<RequireAuth><MyBookingsPage /></RequireAuth>} />
 
             {/* 6. Trang quản trị Admin */}
             <Route path="/admin" element={<Navigate to="/admin/bookings" replace />} />

@@ -19,7 +19,7 @@ class HospitalServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->hospitalService = new HospitalService();
+        $this->hospitalService = new HospitalService;
     }
 
     public function test_search_hospitals_returns_paginated_results_and_filters_by_city(): void
@@ -93,7 +93,7 @@ class HospitalServiceTest extends TestCase
             'owner_id' => $hospital->id,
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '08:00',
-            'end_time' => '09:00',
+            'end_time' => '08:30:00',
             'capacity' => 10,
             'booked_count' => 0,
             'status' => 'available',

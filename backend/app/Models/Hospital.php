@@ -20,6 +20,7 @@ class Hospital extends Model
         'city',
         'hotline',
         'image',
+        'accepting_bookings',
     ];
 
     public function examTypes(): HasMany
@@ -39,11 +40,11 @@ class Hospital extends Model
 
     public function scopeSearch(Builder $query, ?string $keyword): Builder
     {
-        if (!empty($keyword)) {
+        if (! empty($keyword)) {
             $query->where(function (Builder $q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
-                  ->orWhere('address', 'like', "%{$keyword}%")
-                  ->orWhere('description', 'like', "%{$keyword}%");
+                    ->orWhere('address', 'like', "%{$keyword}%")
+                    ->orWhere('description', 'like', "%{$keyword}%");
             });
         }
 
@@ -52,7 +53,7 @@ class Hospital extends Model
 
     public function scopeInCity(Builder $query, ?string $city): Builder
     {
-        if (!empty($city)) {
+        if (! empty($city)) {
             $query->where('city', $city);
         }
 

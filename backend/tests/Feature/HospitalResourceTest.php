@@ -53,7 +53,7 @@ class HospitalResourceTest extends TestCase
         $slot = Slot::factory()->forHospital($hospital, 10)->create([
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '08:00:00',
-            'end_time' => '09:00:00',
+            'end_time' => '08:30:00',
             'capacity' => 10,
             'booked_count' => 2,
             'status' => 'available',

@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
 export default function Navbar() {
-  const { user, isPatient, isAdmin, isGuest, logout, switchRole } = useAuth()
+  const { user, isAdmin, isGuest, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const userDropdownRef = useRef(null)
@@ -44,11 +44,11 @@ export default function Navbar() {
   // Determine active doctor/clinic toggle derived directly
   const currentType = searchParams.get("type") || "doctor"
   const isDoctorOrClinicRoute = location.pathname.startsWith("/doctors")
-  const activeToggle = isDoctorOrClinicRoute && currentType === "hospital" ? "clinic" : "doctor"
+  const activeToggle = (location.pathname.startsWith("/hospitals") || (isDoctorOrClinicRoute && currentType === "hospital")) ? "clinic" : "doctor"
 
   const handleToggle = (type) => {
     if (type === "clinic") {
-      navigate("/doctors?type=hospital")
+      navigate("/hospitals")
     } else {
       navigate("/doctors?type=doctor")
     }
@@ -64,6 +64,7 @@ export default function Navbar() {
       {/* Top Banner: Hotline, Demo Role Switcher & Admin Portal Link */}
       <div className="bg-slate-900 text-slate-200 text-xs py-1.5 px-4">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          {['admin', 'staff', 'hospital_admin', 'kiosk'].includes(user?.role) && <Link to="/reception" className="font-semibold text-sky-200">Tiếp đón bệnh viện</Link>}
           {/* Left: Hotline & Working hours */}
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-sky-400 font-medium">
@@ -78,52 +79,6 @@ export default function Navbar() {
 
           {/* Right: Quick Role Switcher for Testing/Demo & Portal Link */}
           <div className="flex items-center gap-3">
-            {/* Quick Demo Role Switcher */}
-            <div className="flex items-center gap-1 bg-slate-800/90 rounded-lg p-0.5 border border-slate-700">
-              <span className="text-[10px] text-slate-400 px-1.5 hidden lg:inline-block font-medium">
-                Chuyển Role test:
-              </span>
-              <button
-                type="button"
-                onClick={() => switchRole("guest")}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
-                  isGuest 
-                    ? "bg-slate-600 text-white shadow-sm" 
-                    : "text-slate-400 hover:text-white"
-                }`}
-                title="Chế độ Khách (Chưa đăng nhập)"
-              >
-                Khách
-              </button>
-              <button
-                type="button"
-                onClick={() => switchRole("patient")}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
-                  isPatient 
-                    ? "bg-sky-600 text-white shadow-sm font-semibold" 
-                    : "text-slate-400 hover:text-white"
-                }`}
-                title="Chế độ Bệnh nhân"
-              >
-                Bệnh nhân
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  switchRole("admin")
-                  navigate("/admin/bookings")
-                }}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all ${
-                  isAdmin 
-                    ? "bg-amber-600 text-white shadow-sm font-semibold" 
-                    : "text-slate-400 hover:text-white"
-                }`}
-                title="Chế độ Quản trị viên"
-              >
-                Admin
-              </button>
-            </div>
-
             {/* Portal shortcut */}
             {isAdmin ? (
               <Link 
@@ -135,9 +90,6 @@ export default function Navbar() {
             ) : (
               <Link 
                 to="/admin/bookings" 
-                onClick={() => {
-                  if (!isAdmin) switchRole("admin")
-                }}
                 className="text-slate-400 hover:text-white transition-colors underline decoration-slate-600 underline-offset-2"
               >
                 Cổng Quản Trị
@@ -543,50 +495,6 @@ export default function Navbar() {
                 </Link>
               </>
             )}
-          </div>
-
-          {/* Quick Role Switch in Mobile Menu */}
-          <div className="pt-2 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chuyển vai trò thử nghiệm</p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  switchRole("guest")
-                  setMobileMenuOpen(false)
-                }}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center ${
-                  isGuest ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200"
-                }`}
-              >
-                Khách
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  switchRole("patient")
-                  setMobileMenuOpen(false)
-                }}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center ${
-                  isPatient ? "bg-sky-600 text-white border-sky-600" : "bg-white text-slate-600 border-slate-200"
-                }`}
-              >
-                Bệnh nhân
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  switchRole("admin")
-                  navigate("/admin/bookings")
-                  setMobileMenuOpen(false)
-                }}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center ${
-                  isAdmin ? "bg-amber-600 text-white border-amber-600" : "bg-white text-slate-600 border-slate-200"
-                }`}
-              >
-                Admin
-              </button>
-            </div>
           </div>
 
           {/* Auth Actions in Mobile Menu */}

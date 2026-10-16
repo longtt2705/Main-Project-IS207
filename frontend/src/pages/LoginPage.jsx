@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { 
   Lock, 
   Mail, 
@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
 
   const [formData, setFormData] = useState({
     email: "",
@@ -49,7 +50,12 @@ export default function LoginPage() {
 
     if (res.success) {
       // Redirect theo role: admin → /admin/bookings, patient → /dashboard
-      if (res.user.role === "admin") {
+      const redirect = params.get('redirect')
+      if (redirect?.startsWith('/') && !redirect.startsWith('//') && !redirect.includes('\\')) {
+        navigate(redirect, { replace: true })
+      } else if (['staff', 'hospital_admin', 'kiosk'].includes(res.user.role)) {
+        navigate('/reception')
+      } else if (res.user.role === "admin") {
         navigate("/admin/bookings")
       } else {
         navigate("/")

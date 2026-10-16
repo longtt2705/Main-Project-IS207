@@ -15,6 +15,7 @@ class PatientProfile extends Model
         'dob',
         'gender',
         'phone',
+        'national_id',
         'relationship',
     ];
 

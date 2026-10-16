@@ -17,6 +17,8 @@ class HospitalResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'accepting_bookings' => (bool) $this->accepting_bookings,
+            'shift_availability' => $this->shift_availability ?? [],
             'code' => $this->code ?? null,
             'address' => $this->address,
             'city' => $this->city,

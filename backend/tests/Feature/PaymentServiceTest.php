@@ -53,7 +53,7 @@ class PaymentServiceTest extends TestCase
             'phone' => '0900000000',
             'relationship' => 'Bản thân',
         ]);
-        $examType = ExamType::create([
+        $examType = ExamType::factory()->create([
             'hospital_id' => $hospital->id,
             'name' => 'Khám tổng quát',
             'price' => 150000,
@@ -83,13 +83,13 @@ class PaymentServiceTest extends TestCase
         $this->service = app(PaymentService::class);
     }
 
-    public function test_it_calculates_invoice_from_database_values(): void
+    public function test_it_calculates_invoice_using_sprint_three_hospital_fees(): void
     {
         $invoice = $this->service->calculateInvoice($this->booking->id, $this->user->id);
 
-        $this->assertSame(150000, $invoice['fees']['exam_fee']);
-        $this->assertSame(10000, $invoice['fees']['service_fee']);
-        $this->assertSame(160000, $invoice['fees']['total_amount']);
+        $this->assertSame(200000, $invoice['fees']['exam_fee']);
+        $this->assertSame(20000, $invoice['fees']['service_fee']);
+        $this->assertSame(220000, $invoice['fees']['total_amount']);
         $this->assertCount(5, $invoice['available_methods']);
         $this->assertFalse($invoice['is_hold_expired']);
     }

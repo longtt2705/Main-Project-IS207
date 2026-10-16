@@ -2,7 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Hospital, ExamType, PatientProfile, Slot, User};
+use App\Models\Booking;
+use App\Models\ExamType;
+use App\Models\Hospital;
+use App\Models\PatientProfile;
+use App\Models\Slot;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -20,9 +25,10 @@ class HospitalApiTest extends TestCase
         $profile = PatientProfile::factory()->create(['user_id' => $user->id]);
         $slot = Slot::factory()->create([
             'owner_type' => 'hospital', 'owner_id' => $hospital->id,
-            'work_date' => now()->addDay(), 'start_time' => '09:00:00', 'end_time' => '10:00:00',
+            'work_date' => now()->addDay(), 'start_time' => '09:00:00', 'end_time' => '09:30:00',
             'capacity' => 2, 'booked_count' => 0, 'status' => 'available',
         ]);
+
         return ['hospital_id' => $hospital->id, 'exam_type_id' => $exam->id,
             'patient_profile_id' => $profile->id, 'slot_id' => $slot->id];
     }
@@ -69,10 +75,10 @@ class HospitalApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.status', 'pending_payment')
             ->assertJsonPath('data.booking_type', 'hospital')
             ->assertJsonPath('data.symptoms', null);
-        $booking = \App\Models\Booking::findOrFail($response->json('data.id'));
+        $booking = Booking::findOrFail($response->json('data.id'));
         $this->assertTrue($booking->slot_hold_expires_at->equalTo(now()->addMinutes(15)));
         $this->assertSame(1, $booking->slot->booked_count);
-        $this->assertEquals(150000, $booking->payment->exam_fee);
+        $this->assertEquals(200000, $booking->payment->exam_fee);
         $this->postJson('/api/payments/calculate-invoice', ['booking_id' => $booking->id])
             ->assertOk()->assertJsonPath('data.booking_id', $booking->id);
         $this->postJson('/api/bookings/hospital', $data)->assertStatus(409);

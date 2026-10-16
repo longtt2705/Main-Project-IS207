@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\Doctor;
-use App\Models\Hospital;
 use App\Models\PatientProfile;
 use App\Models\Slot;
 use App\Models\Specialty;
@@ -23,7 +22,7 @@ class BookingHistoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->bookingService = new BookingService();
+        $this->bookingService = new BookingService;
     }
 
     public function test_user_can_fetch_their_own_booking_history_via_service(): void
@@ -87,7 +86,7 @@ class BookingHistoryTest extends TestCase
         $this->assertEquals('pending', $pendingResult->items()[0]->status);
 
         $confirmedResult = $this->bookingService->getUserBookings($user->id, ['status' => 'confirmed']);
-        $this->assertCount(1, confirmedResult: $confirmedResult->items());
+        $this->assertCount(1, $confirmedResult->items());
         $this->assertEquals('confirmed', $confirmedResult->items()[0]->status);
     }
 
@@ -104,16 +103,20 @@ class BookingHistoryTest extends TestCase
             'user_id' => $user->id,
             'full_name' => 'Trần Thị Bình',
         ]);
+        // The search also matches doctors; a random doctor can share the patient's name.
+        $doctor = Doctor::factory()->create(['name' => 'Bác sĩ kiểm thử tìm kiếm']);
 
         Booking::factory()->create([
             'user_id' => $user->id,
             'patient_profile_id' => $profile1->id,
+            'doctor_id' => $doctor->id,
             'code' => 'BK2026001',
         ]);
 
         Booking::factory()->create([
             'user_id' => $user->id,
             'patient_profile_id' => $profile2->id,
+            'doctor_id' => $doctor->id,
             'code' => 'BK2026002',
         ]);
 

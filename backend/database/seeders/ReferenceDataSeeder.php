@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Doctor;
 use App\Models\ExamType;
 use App\Models\Hospital;
+use App\Models\HospitalDepartment;
 use App\Models\Slot;
 use App\Models\Specialty;
 use Illuminate\Database\Seeder;
@@ -55,17 +56,17 @@ class ReferenceDataSeeder extends Seeder
         ExamType::create([
             'hospital_id' => $hospital->id,
             'name' => 'Kham tong quat',
-            'price' => 250000,
+            'price' => 200000,
         ]);
         ExamType::create([
             'hospital_id' => $hospital->id,
             'name' => 'Xet nghiem mau co ban',
-            'price' => 180000,
+            'price' => 200000,
         ]);
         ExamType::create([
             'hospital_id' => $hospitalTwo->id,
             'name' => 'Kham nhi tong quat',
-            'price' => 300000,
+            'price' => 200000,
         ]);
 
         Slot::create([
@@ -97,7 +98,7 @@ class ReferenceDataSeeder extends Seeder
             'owner_id' => $hospital->id,
             'work_date' => now()->addDay()->toDateString(),
             'start_time' => '09:00',
-            'end_time' => '10:00',
+            'end_time' => '09:30',
             'capacity' => 10,
         ]);
         Slot::create([
@@ -105,8 +106,17 @@ class ReferenceDataSeeder extends Seeder
             'owner_id' => $hospitalTwo->id,
             'work_date' => now()->addDays(2)->toDateString(),
             'start_time' => '10:00',
-            'end_time' => '11:00',
+            'end_time' => '10:30',
             'capacity' => 8,
         ]);
+        foreach (ExamType::all() as $exam) {
+            $specialty = $exam->hospital_id === $hospitalTwo->id ? $pediatrics : $internalMedicine;
+            $department = HospitalDepartment::firstOrCreate([
+                'hospital_id' => $exam->hospital_id, 'specialty_id' => $specialty->id,
+            ], ['max_shift_capacity' => 50, 'instructions' => $specialty->id === $pediatrics->id
+                ? 'Mang theo sổ tiêm chủng và giấy khai sinh bản photo của trẻ.'
+                : 'Mang theo hồ sơ khám và kết quả xét nghiệm trước đây (nếu có).']);
+            $exam->update(['hospital_department_id' => $department->id]);
+        }
     }
 }

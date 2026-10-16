@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Booking extends Model
 {
@@ -22,6 +21,8 @@ class Booking extends Model
         'status',
         'slot_hold_expires_at',
         'note',
+        'cancel_reason',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -38,12 +39,7 @@ class Booking extends Model
                 return;
             }
 
-            $prefix = 'BK'.now()->format('Ymd');
-            $lastCode = static::where('code', 'like', $prefix.'%')
-                ->orderByDesc('code')
-                ->value('code');
-            $sequence = $lastCode ? ((int) Str::after($lastCode, $prefix)) + 1 : 1;
-            $booking->code = $prefix.str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+            $booking->code = 'BK'.now()->format('Ymd').strtoupper(bin2hex(random_bytes(5)));
         });
     }
 
@@ -64,17 +60,22 @@ class Booking extends Model
 
     public function hospital()
     {
-        return $this->belongsTo(Hospital::class);
+        return $this->belongsTo(Hospital::class)->withTrashed();
     }
 
     public function examType()
     {
-        return $this->belongsTo(ExamType::class);
+        return $this->belongsTo(ExamType::class)->withTrashed();
     }
 
     public function slot()
     {
         return $this->belongsTo(Slot::class);
+    }
+
+    public function ticket()
+    {
+        return $this->hasOne(Ticket::class);
     }
 
     public function payment()
