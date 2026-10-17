@@ -1,0 +1,21 @@
+%% Native Mermaid state machine; see the PDF/Draw.io for the A4 layout.
+%%{init: {"theme": "base", "look": "classic", "themeVariables": {"fontFamily": "Arial", "fontSize": "16px", "primaryColor": "#FFFFFF", "primaryTextColor": "#000000", "primaryBorderColor": "#000000", "lineColor": "#000000", "noteBkgColor": "#FFFFFF", "noteBorderColor": "#174C65", "noteTextColor": "#000000"}, "themeCSS": "path#edge4,path[id^=\"ISSUED-cyclic\"],path[id^=\"CHECKED_IN-cyclic\"]{stroke:#B91C1C!important;stroke-dasharray:5 3!important;}[data-id=\"edge4\"] span,[data-id^=\"ISSUED-cyclic\"] span,[data-id^=\"CHECKED_IN-cyclic\"] span{color:#B91C1C!important;}"}}%%
+stateDiagram-v2
+    direction LR
+    state "ISSUED<br/>Đã phát hành" as ISSUED
+    state "CHECKED_IN<br/>Đã tiếp nhận" as CHECKED_IN
+    state "COMPLETED<br/>Đã khám xong" as COMPLETED
+    state "CANCELLED<br/>Đã hủy phiếu" as CANCELLED
+    state "EXPIRED<br/>Hết hiệu lực" as EXPIRED
+    [*] --> ISSUED: Xác nhận lịch [CONFIRMED, đã trả] / Tạo phiếu
+    ISSUED --> CHECKED_IN: Quét QR [đúng phiếu, đúng ngày, chưa dùng] / Ghi CHECKED_IN
+    CHECKED_IN --> COMPLETED: Xác nhận đã khám [đã check-in] / Lịch = COMPLETED
+    ISSUED --> CANCELLED: Hủy lịch [hợp lệ] / Vô hiệu QR; gọi PAY
+    ISSUED --> EXPIRED: Kiểm tra hạn [quá cuối ca +120p] / Lịch = NO_SHOW (EX-TKT-03)
+    ISSUED --> ISSUED: Quét QR [sai/ngày sai] / Giữ nguyên phiếu (EX-TKT-01)
+    CHECKED_IN --> CHECKED_IN: Quét lại [đã check-in] / Báo giờ tiếp nhận (EX-TKT-02)
+    note right of EXPIRED
+        Mốc cuối ca +120 phút còn cần chốt.
+        BR-BKH-12 / TKT_STM khác cách ghi BR-TKT-10.
+    end note
+%% Codex (tái dựng); Tuấn Anh (chủ miền) | 17/10/2026 | v2.0

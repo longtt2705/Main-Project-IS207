@@ -1,0 +1,59 @@
+{
+  "pdf": "C:\\Users\\Administrator\\Desktop\\Main-Project-IS207\\output\\pdf\\sprint-3-diagrams.pdf",
+  "archive": "C:\\Users\\Administrator\\Desktop\\Main-Project-IS207\\output\\sprint-3-diagrams.zip",
+  "page_count": 6,
+  "page_size_pt": [
+    841.8897637795277,
+    595.2755905511812
+  ],
+  "minimum_font_pt": 12,
+  "palette": [
+    "#000000",
+    "#174C65",
+    "#B91C1C",
+    "#FFFFFF"
+  ],
+  "diagrams": [
+    {
+      "id": "ACT-BKH-01",
+      "nodes": 15,
+      "edges": 17,
+      "exceptions": [
+        "EX-BKH-01",
+        "EX-BKH-02",
+        "EX-BKH-07",
+        "EX-BKH-08"
+      ]
+    },
+    {
+      "id": "ACT-BKH-02",
+      "nodes": 17,
+      "edges": 17,
+      "exceptions": [
+        "EX-BKH-03",
+        "EX-BKH-04",
+        "EX-BKH-09"
+      ]
+    },
+    {
+      "id": "ACT-BKH-03",
+      "nodes": 20,
+      "edges": 21,
+      "exceptions": [
+        "EX-BKH-05",
+        "EX-BKH-06",
+        "EX-BKH-10"
+      ]
+    },
+    {
+      "id": "STM-TKT-01",
+      "nodes": 6,
+      "edges": 7,
+      "exceptions": [
+        "EX-TKT-01",
+        "EX-TKT-02",
+        "EX-TKT-03"
+      ]
+    }
+  ]
+}

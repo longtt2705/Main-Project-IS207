@@ -1,0 +1,55 @@
+%% A2: paste this source into a Mermaid block in Notion.
+%% The companion Draw.io/PDF retains the manual A4 print layout.
+%% All graph nodes and transitions match the companion exports.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial","fontSize":"16px","primaryColor":"#ffffff","primaryTextColor":"#000000","primaryBorderColor":"#000000","lineColor":"#000000","clusterBkg":"#ffffff","clusterBorder":"#174C65"},"flowchart":{"curve":"linear","htmlLabels":true}}}%%
+flowchart LR
+ subgraph lane_patient["Bệnh nhân"]
+ direction TB
+  n_start(("●"))
+  n_present("Xuất trình QR")
+  n_clinic("Đến phòng khám<br/>(ngoài MedSi)")
+  n_end(("◉"))
+  n_help("Liên hệ tiếp đón")
+  n_help_end(("◉"))
+  n_help_merge{" "}
+ end
+ subgraph lane_staff["Kiosk / / Tiếp đón"]
+ direction TB
+  n_scan("Quét và gửi QR")
+  n_reply("Hiển thị STT, phòng")
+  n_invalid("Từ chối mã QR")
+  n_wrong_day("Báo sai ngày")
+ end
+ subgraph lane_medsi["MedSi"]
+ direction TB
+  n_valid{"QR hợp lệ?"}
+  n_date{"Đúng ngày?"}
+  n_state{"Tiếp nhận<br/>được?"}
+  n_mark("Ghi CHECKED_IN<br/>và check_in_at")
+  n_used("Báo trạng thái<br/>Giữ nguyên phiếu")
+  n_used_end(("◉"))
+ end
+ n_start --> n_present
+ n_present --> n_scan
+ n_scan --> n_valid
+ n_valid -->|"[hợp lệ]"| n_date
+ n_valid -.->|"[sai / hết hạn]<br/>EX-BKH-03"| n_invalid
+ n_invalid -.-> n_help_merge
+ n_date -->|"[đúng ngày]"| n_state
+ n_date -.->|"[sai ngày]<br/>EX-BKH-04"| n_wrong_day
+ n_wrong_day -.-> n_help_merge
+ n_state -->|"[ISSUED]"| n_mark
+ n_state -.->|"[đã dùng / hủy]<br/>EX-BKH-09"| n_used
+ n_used -.-> n_used_end
+ n_help --> n_help_end
+ n_mark --> n_reply
+ n_reply --> n_clinic
+ n_clinic --> n_end
+ n_help_merge --> n_help
+ linkStyle 4 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 5 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 7 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 8 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 10 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 11 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+%% Metadata: ACT-BKH-02 | Tiếp đón tại viện | Codex (tái dựng); Tuấn Anh (chủ miền) | 17/10/2026 | v2.0

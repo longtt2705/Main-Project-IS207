@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-10-17T00:00:00+07:00" type="device">
+  <diagram id="STM-TKT-01" name="STM-TKT-01">
+    <mxGraphModel dx="1122" dy="794" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1122" pageHeight="794" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Vòng đời phiếu và trạng thái lịch khám" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;text;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;fontColor=#174C65;align=left;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="32.0" y="24.0" width="1058.6666666666665" height="37.33333333333333" />
+        </mxCell>
+        <mxCell id="subtitle" value="STM-TKT-01 | Đặc tả C5 - MedSi | GMT+7" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="32.0" y="62.666666666666664" width="1058.6666666666665" height="24.0" />
+        </mxCell>
+        <mxCell id="start" value="" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;shape=ellipse;fillColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="58.666666666666664" y="324.0" width="18.666666666666664" height="18.666666666666664" />
+        </mxCell>
+        <mxCell id="ISSUED" value="ISSUED&lt;br&gt;Đã phát hành" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;rounded=1;arcSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="260.0" y="286.66666666666663" width="220.0" height="93.33333333333333" />
+        </mxCell>
+        <mxCell id="CHECKED_IN" value="CHECKED_IN&lt;br&gt;Đã tiếp nhận" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;rounded=1;arcSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="740.0" y="286.66666666666663" width="220.0" height="93.33333333333333" />
+        </mxCell>
+        <mxCell id="COMPLETED" value="COMPLETED&lt;br&gt;Đã khám xong" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;rounded=1;arcSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="740.0" y="540.0" width="220.0" height="80.0" />
+        </mxCell>
+        <mxCell id="CANCELLED" value="CANCELLED&lt;br&gt;Đã hủy phiếu" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;rounded=1;arcSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="260.0" y="540.0" width="220.0" height="80.0" />
+        </mxCell>
+        <mxCell id="EXPIRED" value="EXPIRED&lt;br&gt;Hết hiệu lực" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;rounded=1;arcSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="260.0" y="100.0" width="220.0" height="93.33333333333333" />
+        </mxCell>
+        <mxCell id="edge_0" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#000000;dashed=0;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="start" target="ISSUED">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_1" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#000000;dashed=0;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="ISSUED" target="CHECKED_IN">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_2" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#000000;dashed=0;exitX=0.49696969696969695;exitY=1.0;exitPerimeter=0;entryX=0.49696969696969695;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="CHECKED_IN" target="COMPLETED">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_3" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#000000;dashed=0;exitX=0.49696969696969695;exitY=1.0;exitPerimeter=0;entryX=0.49696969696969695;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="ISSUED" target="CANCELLED">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_4" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B91C1C;dashed=1;exitX=0.49696969696969695;exitY=0.0;exitPerimeter=0;entryX=0.49696969696969695;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="ISSUED" target="EXPIRED">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_5" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B91C1C;dashed=1;exitX=1.0;exitY=0.21428571428571427;exitPerimeter=0;entryX=0.8181818181818182;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="ISSUED" target="ISSUED">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="640.0" y="306.66666666666663" />
+              <mxPoint x="640.0" y="206.66666666666666" />
+              <mxPoint x="440.0" y="206.66666666666666" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_6" style="edgeStyle=none;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B91C1C;dashed=1;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.49696969696969695;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="CHECKED_IN" target="CHECKED_IN">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1042.6666666666665" y="333.3333333333333" />
+              <mxPoint x="1042.6666666666665" y="240.0" />
+              <mxPoint x="849.3333333333333" y="240.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_label_0" value="Xác nhận lịch&lt;br&gt;[CONFIRMED, đã trả]&lt;br&gt;/ Tạo phiếu" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="75.54427083333333" y="379.91999999999996" width="166.24479166666666" height="61.493333333333325" />
+        </mxCell>
+        <mxCell id="edge_label_1" value="Quét QR [đúng phiếu,&lt;br&gt;đúng ngày, chưa dùng]&lt;br&gt;/ Ghi CHECKED_IN" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="521.69140625" y="345.25333333333333" width="175.28385416666666" height="61.493333333333325" />
+        </mxCell>
+        <mxCell id="edge_label_2" value="Xác nhận đã khám&lt;br&gt;[đã check-in]&lt;br&gt;/ Lịch = COMPLETED" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="767.3098958333333" y="429.25333333333333" width="166.71354166666666" height="61.493333333333325" />
+        </mxCell>
+        <mxCell id="edge_label_3" value="Hủy lịch [hợp lệ]&lt;br&gt;/ Vô hiệu QR; gọi PAY" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="284.84765625" y="467.9466666666666" width="168.97135416666666" height="42.773333333333326" />
+        </mxCell>
+        <mxCell id="edge_label_4" value="Kiểm tra hạn&lt;br&gt;[quá cuối ca +120p]&lt;br&gt;/ Lịch = NO_SHOW&lt;br&gt;EX-TKT-03" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#B91C1C;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="111.27864583333333" y="201.2266666666667" width="150.77604166666666" height="80.21333333333332" />
+        </mxCell>
+        <mxCell id="edge_label_5" value="Quét QR [sai/ngày sai]&lt;br&gt;/ Giữ nguyên phiếu&lt;br&gt;EX-TKT-01" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#B91C1C;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="538.1861979166666" y="122.58666666666666" width="171.62760416666666" height="61.493333333333325" />
+        </mxCell>
+        <mxCell id="edge_label_6" value="Quét lại [đã check-in]&lt;br&gt;/ Báo giờ tiếp nhận&lt;br&gt;EX-TKT-02" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;shape=rectangle;strokeColor=none;fillColor=#ffffff;spacing=0;fontColor=#B91C1C;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="818.1848958333333" y="193.25333333333333" width="160.96354166666666" height="61.493333333333325" />
+        </mxCell>
+        <mxCell id="legend" value="→ Luồng chính     - - → Ngoại lệ (EX)     6 nút" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="32.0" y="636.0" width="713.3333333333333" height="32.0" />
+        </mxCell>
+        <mxCell id="notes" value="Không tạo phiếu trước CONFIRMED; mỗi appointment chỉ có một ticket.&lt;br&gt;CANCELLED, EXPIRED, COMPLETED giữ bản ghi; không cấp lại số thứ tự đã hủy.&lt;br&gt;Mốc +120 phút và xác nhận hoàn tất cần chốt với chủ miền; xem bảng kèm theo." style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;text;strokeColor=none;fillColor=none;align=left;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="32.0" y="676.0" width="698.6666666666666" height="100.0" />
+        </mxCell>
+        <mxCell id="metadata" value="Vòng đời phiếu khám&lt;br&gt;Mã: STM-TKT-01 | v2.0&lt;br&gt;Tác giả tái dựng: Codex&lt;br&gt;Chủ miền: Tuấn Anh | 17/10/2026" style="html=1;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#000000;fillColor=#ffffff;strokeColor=#174C65;align=left;spacing=6;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="757.3333333333333" y="666.6666666666666" width="333.3333333333333" height="110.66666666666666" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

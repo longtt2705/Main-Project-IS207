@@ -98,3 +98,14 @@ Tài khoản `admin` có quyền hệ thống; `staff`, `hospital_admin`, `kiosk
 - Lệnh lint toàn frontend vẫn có lỗi tồn tại trước ở các component thanh toán demo cũ không còn dùng trong PaymentPage, `components/ui/dialog.jsx` và `AuthContext.jsx`; đây không phải kết quả pass toàn bộ lint repository.
 
 Các câu hỏi **Open** OQ-BKH-01 đến 06 không được coi là rule đã chốt: khóa tài khoản vì nhiều lần no-show, nhắc lịch Push/Email/SMS, cơ chế dự phòng Kiosk, thu thập BHYT, phân bác sĩ tự động và tích hợp HIS đầy đủ vẫn cần quyết định/tích hợp của nhóm. Không tạo dữ liệu phỏng vấn, ảnh khảo sát hay bằng chứng học thuật giả.
+
+## 5. Sơ đồ C5 được tái dựng ngày 17/10/2026
+
+Đã đọc lại PDF yêu cầu và tái dựng **ACT-BKH-01, ACT-BKH-02, ACT-BKH-03, STM-TKT-01**. Các file Draw.io trong kho yêu cầu chỉ có khung/lane hoặc tiêu đề, không có cạnh nối; bản mới có đồ thị chỉnh sửa được. Bộ mới sửa bố cục A4 ngang, nhãn tiếng Việt, swimlane, điều kiện rẽ nhánh, mã EX, vòng đời phiếu và khung tên theo A1/A4/A5/C5. Tên trạng thái chung và nghĩa của EX-BKH-01 đến 06 được giữ nguyên.
+
+- [PDF bốn sơ đồ và bảng chuyển trạng thái](../output/pdf/sprint-3-diagrams.pdf).
+- [Toàn bộ bản xuất và nguồn chỉnh sửa](../output/sprint-3-diagrams.zip).
+- [Hướng dẫn, giải thích từng hình, nguồn và điểm cần chốt](diagrams/sprint-3/GUIDE.txt).
+- [Nguồn tái tạo](diagrams/sprint-3/generate_diagrams.py); các file Mermaid, Draw.io, PNG và bảng CSV nằm cùng thư mục.
+
+A2 ưu tiên mã Mermaid trong Notion trong khi bảng C5 vẫn ghi Draw.io, nên bộ bàn giao có cả hai. PDF/PNG/Draw.io giữ bố cục in A4; Mermaid có thể tự sắp xếp khác. Đã kiểm tra render Mermaid, đồ thị Draw.io, đầu nối, số node, mã ngoại lệ và toàn bộ sáu trang PDF. Mốc hết hạn +120 phút và ranh giới HIS vẫn được đánh dấu cần nhóm xác nhận; bộ sơ đồ không biến các giả định triển khai ở mục 2 thành quyết định đã được nhóm duyệt.

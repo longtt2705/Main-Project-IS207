@@ -1,0 +1,58 @@
+%% A2: paste this source into a Mermaid block in Notion.
+%% The companion Draw.io/PDF retains the manual A4 print layout.
+%% All graph nodes and transitions match the companion exports.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial","fontSize":"16px","primaryColor":"#ffffff","primaryTextColor":"#000000","primaryBorderColor":"#000000","lineColor":"#000000","clusterBkg":"#ffffff","clusterBorder":"#174C65"},"flowchart":{"curve":"linear","htmlLabels":true}}}%%
+flowchart LR
+ subgraph lane_patient["Bệnh nhân"]
+ direction TB
+  n_start(("●"))
+  n_open("Mở lịch sử")
+  n_login("Đăng nhập lại")
+  n_filters("Lọc / tìm mã phiếu<br/>Chọn trang")
+  n_select("Chọn lịch cần xem")
+  n_display("Xem QR / tải phiếu")
+  n_end(("◉"))
+  n_open_merge{" "}
+  n_filter_merge{" "}
+ end
+ subgraph lane_medsi["MedSi"]
+ direction TB
+  n_auth{"Phiên hợp lệ?"}
+  n_query("Lấy lịch của mình<br/>và phân trang")
+  n_found{"Có kết quả?"}
+  n_list("Hiển thị danh sách")
+  n_empty("Báo không có lịch")
+  n_owner{"Đúng chủ sở hữu?"}
+  n_ticket{"Có phiếu?"}
+  n_deny("Từ chối truy cập")
+  n_deny_end(("◉"))
+  n_status("Xem trạng thái<br/>Chưa phát hành")
+  n_status_end(("◉"))
+ end
+ n_start --> n_open_merge
+ n_open --> n_auth
+ n_auth -.->|"[hết phiên]<br/>EX-BKH-06"| n_login
+ n_login -.-> n_open_merge
+ n_auth -->|"[hợp lệ]"| n_filter_merge
+ n_filters --> n_query
+ n_query --> n_found
+ n_found -->|"[có]"| n_list
+ n_found -.->|"[không có]<br/>EX-BKH-05"| n_empty
+ n_empty -.-> n_filter_merge
+ n_list --> n_select
+ n_select --> n_owner
+ n_owner -->|"[thuộc mình]"| n_ticket
+ n_owner -.->|"[không thuộc mình]<br/>EX-BKH-10"| n_deny
+ n_deny --> n_deny_end
+ n_ticket -->|"[chưa có]"| n_status
+ n_status --> n_status_end
+ n_ticket -->|"[đã có]"| n_display
+ n_display --> n_end
+ n_open_merge --> n_open
+ n_filter_merge --> n_filters
+ linkStyle 2 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 3 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 8 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 9 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 13 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+%% Metadata: ACT-BKH-03 | Tra cứu lịch sử | Codex (tái dựng); Tuấn Anh (chủ miền) | 17/10/2026 | v2.0

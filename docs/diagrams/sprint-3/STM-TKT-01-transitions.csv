@@ -1,0 +1,11 @@
+﻿Từ,Đến,Sự kiện kích hoạt,Ai kích hoạt,Điều kiện,Tác dụng phụ
+Chưa có phiếu,ISSUED,Xác nhận lịch,MedSi / PAY,appointment = CONFIRMED; thanh toán đã xác nhận; chưa có ticket.,Tạo đúng một ticket; ký QR; cấp STT theo viện/khoa/ngày. Callback lặp trả phiếu cũ.
+ISSUED,CHECKED_IN,Quét QR,Kiosk / tiếp đón,"Được phân quyền đúng viện; QR đúng chữ ký, đúng ngày, chưa hết hạn; lịch CONFIRMED.",Ghi check_in_at một lần; lịch → CHECKED_IN; trả STT/phòng. Không tự giả định đồng bộ HIS.
+CHECKED_IN,COMPLETED,Xác nhận đã khám,Nhân viên được quyền; HIS nếu đã tích hợp,Đã check-in; có xác nhận hoàn tất từ cơ sở.,Lịch → COMPLETED; chuyển sang nhóm đã khám. Tín hiệu HIS là tích hợp còn cần chốt.
+ISSUED,CANCELLED,Hủy lịch,Bệnh nhân / viện,Bệnh nhân: trước ca ít nhất 24h; hoặc viện chủ động hủy.,"Lịch → CANCELLED; vô hiệu QR, nhả chỗ, không tái dùng STT; yêu cầu PAY hoàn phí theo chính sách."
+ISSUED,EXPIRED,Kiểm tra hạn,Bộ định thời MedSi,Vẫn ISSUED; quá kết thúc ca +120 phút (giả định cần chốt).,Lịch → NO_SHOW; vô hiệu QR; không tự hoàn tiền. BR-TKT-10 và BR-BKH-12 chưa cùng cách diễn đạt.
+ISSUED,ISSUED,"Quét QR lỗi
+EX-TKT-01",Kiosk / tiếp đón,"Chữ ký/token sai, sai viện hoặc sai ngày.","Không chuyển trạng thái, không ghi check_in_at; báo lỗi. Mã giả không tồn tại không tạo ticket mới."
+CHECKED_IN,CHECKED_IN,"Quét lặp
+EX-TKT-02",Kiosk / tiếp đón,Phiếu đã được tiếp nhận.,Giữ nguyên check_in_at; báo thời điểm quét trước; không cấp lại STT.
+CANCELLED / EXPIRED / COMPLETED,Không đổi,Quét phiếu kết thúc,Kiosk / tiếp đón,"Phiếu đã hủy, hết hạn hoặc hoàn tất.",Từ chối check-in; giữ bản ghi lịch sử và trạng thái lịch khám tương ứng.

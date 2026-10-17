@@ -1,0 +1,22 @@
+%% A2: paste this source into a Mermaid block in Notion.
+%% The companion Draw.io/PDF retains the manual A4 print layout.
+%% All graph nodes and transitions match the companion exports.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial","fontSize":"16px","primaryColor":"#ffffff","primaryTextColor":"#000000","primaryBorderColor":"#000000","lineColor":"#000000","clusterBkg":"#ffffff","clusterBorder":"#174C65"},"flowchart":{"curve":"linear","htmlLabels":true}}}%%
+flowchart LR
+  n_start(("●"))
+  n_ISSUED("ISSUED<br/>Đã phát hành")
+  n_CHECKED_IN("CHECKED_IN<br/>Đã tiếp nhận")
+  n_COMPLETED("COMPLETED<br/>Đã khám xong")
+  n_CANCELLED("CANCELLED<br/>Đã hủy phiếu")
+  n_EXPIRED("EXPIRED<br/>Hết hiệu lực")
+ n_start -->|"Xác nhận lịch<br/>[CONFIRMED, đã trả]<br/>/ Tạo phiếu"| n_ISSUED
+ n_ISSUED -->|"Quét QR [đúng phiếu,<br/>đúng ngày, chưa dùng]<br/>/ Ghi CHECKED_IN"| n_CHECKED_IN
+ n_CHECKED_IN -->|"Xác nhận đã khám<br/>[đã check-in]<br/>/ Lịch = COMPLETED"| n_COMPLETED
+ n_ISSUED -->|"Hủy lịch [hợp lệ]<br/>/ Vô hiệu QR; gọi PAY"| n_CANCELLED
+ n_ISSUED -.->|"Kiểm tra hạn<br/>[quá cuối ca +120p]<br/>/ Lịch = NO_SHOW<br/>EX-TKT-03"| n_EXPIRED
+ n_ISSUED -.->|"Quét QR [sai/ngày sai]<br/>/ Giữ nguyên phiếu<br/>EX-TKT-01"| n_ISSUED
+ n_CHECKED_IN -.->|"Quét lại [đã check-in]<br/>/ Báo giờ tiếp nhận<br/>EX-TKT-02"| n_CHECKED_IN
+ linkStyle 4 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 5 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 6 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+%% Metadata: STM-TKT-01 | Vòng đời phiếu khám | Codex (tái dựng); Tuấn Anh (chủ miền) | 17/10/2026 | v2.0

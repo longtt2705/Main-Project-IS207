@@ -1,0 +1,51 @@
+%% A2: paste this source into a Mermaid block in Notion.
+%% The companion Draw.io/PDF retains the manual A4 print layout.
+%% All graph nodes and transitions match the companion exports.
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial","fontSize":"16px","primaryColor":"#ffffff","primaryTextColor":"#000000","primaryBorderColor":"#000000","lineColor":"#000000","clusterBkg":"#ffffff","clusterBorder":"#174C65"},"flowchart":{"curve":"linear","htmlLabels":true}}}%%
+flowchart LR
+ subgraph lane_patient["Bệnh nhân"]
+ direction TB
+  n_start(("●"))
+  n_select("Chọn viện, khoa,<br/>ngày, ca và hồ sơ")
+  n_view("Xem phiếu và QR")
+  n_end(("◉"))
+  n_choice_merge{" "}
+ end
+ subgraph lane_medsi["MedSi"]
+ direction TB
+  n_check("Kiểm tra điều kiện<br/>và sức chứa")
+  n_allowed{"Được đặt?"}
+  n_hold("Giữ chỗ 15 phút")
+  n_result{"Kết quả / hạn?"}
+  n_confirm("Xác nhận lịch")
+  n_issue("Phát hành phiếu")
+  n_release("Hủy lịch, nhả chỗ")
+  n_expired_end(("◉"))
+ end
+ subgraph lane_pay["Miền PAY"]
+ direction TB
+  n_pay("Thực hiện<br/>thanh toán")
+  n_pay_merge{" "}
+ end
+ n_start --> n_choice_merge
+ n_select --> n_check
+ n_check --> n_allowed
+ n_allowed -.->|"[hết chỗ]<br/>EX-BKH-01"| n_choice_merge
+ n_allowed -.->|"[điều kiện sai]<br/>EX-BKH-07"| n_choice_merge
+ n_allowed -->|"[hợp lệ, còn chỗ]"| n_hold
+ n_hold --> n_pay_merge
+ n_pay --> n_result
+ n_result -->|"[đã trả, còn hạn]"| n_confirm
+ n_result -.->|"[lỗi, còn hạn]<br/>EX-BKH-08"| n_pay_merge
+ n_result -.->|"[hết 15 phút]<br/>EX-BKH-02"| n_release
+ n_release --> n_expired_end
+ n_confirm --> n_issue
+ n_issue --> n_view
+ n_view --> n_end
+ n_choice_merge --> n_select
+ n_pay_merge --> n_pay
+ linkStyle 3 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 4 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 9 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+ linkStyle 10 stroke:#B91C1C,color:#B91C1C,stroke-width:1.6px,stroke-dasharray:5 3;
+%% Metadata: ACT-BKH-01 | Đặt lịch bệnh viện | Codex (tái dựng); Tuấn Anh (chủ miền) | 17/10/2026 | v2.0

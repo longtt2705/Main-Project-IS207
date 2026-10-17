@@ -528,3 +528,4 @@ Trong thư mục `docs/`, các file tài liệu chuyên sâu được phân đ�
 2. **[ai-development-log.md](docs/ai-development-log.md)**: Ghi chép quá trình tương tác, prompt log, các quyết định kiến trúc quan trọng khi phát triển cùng AI.
 3. **[test-cases.md](docs/test-cases.md)**: Danh sách ca kiểm thử tự động và thủ công (Unit test, Feature test cho Booking concurrency, API test).
 4. **[database-schema.md](docs/database-schema.md)**: Mô hình ERD, danh mục bảng/cột và các quy tắc toàn vẹn của database.
+5. **[Sơ đồ Sprint 3](output/pdf/sprint-3-diagrams.pdf)**: Ba activity BKH, một state machine TKT và bảng chuyển trạng thái. [Tải bộ nguồn Mermaid/Draw.io và PNG](output/sprint-3-diagrams.zip); [hướng dẫn và truy vết yêu cầu](docs/diagrams/sprint-3/GUIDE.txt).

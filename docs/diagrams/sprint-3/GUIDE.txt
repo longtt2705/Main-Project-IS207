@@ -1,0 +1,104 @@
+BỘ SƠ ĐỒ BKH / TKT - SPRINT 3
+Phiên bản 2.0 - 17/10/2026 (GMT+7)
+Tác giả tái dựng: Codex. Chủ miền trong tài liệu gốc: Tuấn Anh.
+
+1. Phạm vi và nguồn
+
+Tái dựng đúng bốn sơ đồ thuộc mục C5, không thay thế toàn bộ bài nộp của nhóm.
+Nguồn yêu cầu: https://github.com/vuttuananh168/task-sprint-3
+Phiên bản đối chiếu: 3a2e97d61208a91a261cffc6a0b679e8e2175e29.
+Trong thư mục "Tuấn Anh - Web - Sprint 3":
+- PDF "(7) PHÂN TÍCH THIẾT KẾ LẠI _ Notion.pdf": A1-A5, A7, A10 và C5.
+- BKH_DOC / TKT_SPEC: phạm vi và luồng nghiệp vụ.
+- BKH_DD / BKH_BR / TKT_BR / BKH_CMP / BKH_OQ: rule và câu hỏi còn mở.
+- BKH_ACT/Code.docx; TKT_STM/TKT_STM.docx: mã ngoại lệ và vòng đời gốc.
+
+Các file Draw.io gốc chỉ chứa khung/lane hoặc tiêu đề, không có cạnh nối.
+Bản mới có node và cạnh thật, chỉnh sửa được; không nhúng PNG thay cho sơ đồ.
+Giữ nguyên bộ trạng thái chung; không tự đặt trạng thái thay thế.
+
+2. Dùng file nào
+
+- sprint-3-diagrams.pdf: 6 trang A4 ngang, gồm 4 sơ đồ và 2 trang bảng chuyển trạng thái.
+- ACT-BKH-01/02/03.png và STM-TKT-01.png: ảnh để chèn vào tài liệu.
+- Các file .drawio: mở tại diagrams.net để chỉnh bố cục và xuất A4.
+- ACT-BKH-01/02/03.mmd: mã Mermaid với subgraph làm swimlane theo actor.
+- STM-TKT-01.mmd: Mermaid stateDiagram-v2, có sự kiện [điều kiện] / hành động.
+- STM-TKT-01-styled.mmd: cùng đồ thị trạng thái bằng flowchart, hỗ trợ linkStyle.
+  Dùng bản này nếu nơi nhúng Mermaid bỏ themeCSS của stateDiagram-v2.
+- STM-TKT-01-transitions.csv: bảng UTF-8 BOM, sáu cột để nhập vào Notion.
+- generate_diagrams.py: nguồn dữ liệu/bố cục chung để tái tạo toàn bộ bản xuất.
+
+A2 của PDF yêu cầu mã Mermaid trong Notion, còn bảng C5 vẫn ghi Draw.io.
+Vì vậy cung cấp cả hai định dạng. Dán nội dung .mmd vào code block Mermaid;
+thêm ảnh PNG và ba dòng giải thích đi kèm để giữ bản in đúng A4.
+Mermaid tự sắp xếp nên không bảo đảm tọa độ giống PDF. PDF/PNG/Draw.io là
+bản bố cục in đã kiểm tra: chữ 12pt trở lên, tối đa 25 node, bốn màu,
+khung tên ở góc dưới phải, luồng chính đen và ngoại lệ nét đứt đỏ.
+Không xem việc tạo file này là đã nộp hay đã cập nhật trang Notion của nhóm.
+
+3. Giải thích từng sơ đồ (đưa kèm hình theo A7)
+
+Hình 1 - ACT-BKH-01: Đặt lịch khám tại bệnh viện
+Người bệnh chọn viện, khoa, ngày, ca và hồ sơ; không chọn bác sĩ ở bước đặt.
+MedSi kiểm tra điều kiện và khóa/giữ chỗ nguyên tử trong 15 phút, tính cả hold còn hạn.
+PAY trả kết quả hoặc bộ định thời báo hết hạn; chỉ xác nhận và cấp phiếu sau thanh toán hợp lệ.
+Hết chỗ/vi phạm rule quay về chọn lại; lỗi thanh toán thử lại trong hạn; hết hạn thì hủy và nhả chỗ.
+
+Hình 2 - ACT-BKH-02: Check-in tại viện và ranh giới MedSi
+Bệnh nhân xuất trình QR; Kiosk/tiếp đón có quyền tại đúng viện quét và gửi mã.
+MedSi kiểm tra chữ ký, thời hạn, ngày hẹn và trạng thái trước khi ghi check_in_at một lần.
+QR sai/hết hạn, sai ngày và phiếu đã dùng/hủy không tạo lần tiếp nhận hay STT mới.
+MedSi kết thúc luồng ở check-in/trả thông tin tiếp đón; khám, xét nghiệm, kê đơn thuộc viện.
+
+Hình 3 - ACT-BKH-03: Xem và tra cứu lịch sử
+Phiên phải hợp lệ; truy vấn chỉ lấy lịch của user_account hiện tại, có lọc và phân trang.
+Cho tra cứu ticket_code; báo kết quả rỗng và cho điều chỉnh bộ lọc.
+Khi mở chi tiết phải kiểm tra lại chủ sở hữu; lịch chưa phát hành chỉ hiển thị trạng thái.
+Phiếu đã phát hành cho xem/tải; phiếu hủy/hết hạn vẫn là lịch sử nhưng QR không check-in được.
+
+Hình 4 - STM-TKT-01: Vòng đời phiếu và quan hệ với appointment
+CONFIRMED và thanh toán thành công mới tạo một ticket ISSUED duy nhất; callback lặp không cấp lại.
+Quét hợp lệ đổi ticket và appointment sang CHECKED_IN; xác nhận đã khám đổi sang COMPLETED.
+Hủy hợp lệ đổi sang CANCELLED; quá hạn chưa đến đổi ticket sang EXPIRED và lịch sang NO_SHOW.
+Quét sai hoặc quét lặp giữ nguyên trạng thái; các trạng thái kết thúc vẫn giữ bản ghi lịch sử.
+
+4. Mã ngoại lệ và truy vết rule
+
+Không đổi nghĩa mã cũ (A5):
+EX-BKH-01 = hết chỗ; EX-BKH-02 = hết thời gian giữ chỗ;
+EX-BKH-03 = QR sai/hết hạn; EX-BKH-04 = sai ngày hẹn;
+EX-BKH-05 = không có kết quả lịch sử; EX-BKH-06 = hết phiên.
+Mã bổ sung cho nhánh còn thiếu:
+EX-BKH-07 = điều kiện đặt không hợp lệ; EX-BKH-08 = thanh toán lỗi nhưng còn hạn;
+EX-BKH-09 = phiếu đã dùng/hủy; EX-BKH-10 = không phải chủ sở hữu.
+EX-TKT-01 = quét QR lỗi; EX-TKT-02 = quét lặp; EX-TKT-03 = hết hạn phiếu.
+
+ACT-BKH-01: BR-BKH-01..07/13/14; BR-TKT-01..04.
+ACT-BKH-02: BR-TKT-03/07/08/09; OQ-BKH-02/04/06.
+ACT-BKH-03: BR-BKH-11; BR-TKT-05/11; phần lịch sử và tải phiếu trong TKT_SPEC.
+STM-TKT-01: BR-BKH-07..10/12; BR-TKT-01/05/06/07/09/10/12; bảng TKT_STM.
+Bảng chuyển trạng thái ghi rõ ai kích hoạt, điều kiện và tác dụng phụ.
+Yêu cầu hoàn tiền chuyển cho PAY không có nghĩa ngân hàng đã hoàn tiền thành công.
+
+5. Các điểm cần nhóm xác nhận
+
+- TKT_BR-10 ghi hết ca; BR-BKH-12 và TKT_STM ghi sau ca 120 phút.
+  Bản vẽ dùng cuối ca +120 phút như giả định cần chốt, không ghi là quyết định đã duyệt.
+- Ranh giới dừng ở check-in là đề xuất OQ-BKH-06 còn Open. Nguồn xác nhận COMPLETED
+  có thể là nhân viên viện; chỉ nhận từ HIS khi có tích hợp đã được xác nhận.
+- OQ-BKH-02 (phân bác sĩ), OQ-BKH-04 (Kiosk/mã dự phòng) còn Open;
+  không đưa phân bác sĩ tự động hay mã dự phòng chưa chốt thành luồng bắt buộc.
+- Bộ phí 200.000đ + 20.000đ và ngưỡng hủy 24 giờ theo bộ BKH_BR hiện có;
+  phải đồng bộ khi nhóm chốt thay đổi. Chuyển yêu cầu đổi trạng thái chung qua An (A10).
+
+6. Tái tạo và kiểm tra
+
+Trong môi trường Python có reportlab và pypdfium2, chạy:
+python docs/diagrams/sprint-3/generate_diagrams.py
+Script dùng Arial ở C:/Windows/Fonts. Trên hệ điều hành khác, sửa đường dẫn font
+sang font có tiếng Việt tương đương trước khi chạy và kiểm tra lại bản in.
+Các node/cạnh, nhãn và mã ngoại lệ được xuất từ cùng một mô hình.
+Kiểm tra tự động: số node, >=2 mã EX, nhánh có [guard], đầu mũi tên nằm trên node.
+Đã mở/render file Mermaid bằng Mermaid 11.12.0 và Draw.io bằng mxGraph;
+đã xem các trang PDF/PNG và bảng chuyển trạng thái ở độ phân giải đọc được.
